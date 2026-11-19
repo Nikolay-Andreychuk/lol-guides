@@ -198,7 +198,11 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
   const env = CODEX_HOME ? { ...process.env, CODEX_HOME } : process.env;
   // stdin must be closed: codex exec otherwise waits for more prompt text on it.
   const proc = Bun.spawn(args, { cwd: AGENT_CWD, env, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
-  const timer = setTimeout(() => proc.kill(), TIMEOUT_MS);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    proc.kill();
+  }, TIMEOUT_MS);
   const [out, err] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
   await proc.exited;
   clearTimeout(timer);
@@ -221,7 +225,8 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
   const durationMs = Date.now() - started;
   const text = existsSync(outFile) ? readFileSync(outFile, "utf8") : "";
   rmSync(dir, { recursive: true, force: true });
-  if (!error && proc.exitCode !== 0) error = (err.trim().slice(-500) || `codex завершился с кодом ${proc.exitCode}`);
+  if (timedOut) error = `агент не уложился в ${TIMEOUT_MS / 60_000} мин`;
+  else if (!error && proc.exitCode !== 0) error = err.trim().slice(-500) || `codex завершился с кодом ${proc.exitCode}`;
   if (error) return { sessionId, usage, durationMs, error: error.slice(0, 500), limit: LIMIT_RE.test(error) };
   try {
     return { body: JSON.parse(text), sessionId, usage, durationMs };
