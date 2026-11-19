@@ -77,7 +77,8 @@ fun RichText(
                 is Piece.Text -> append(p.text)
                 is Piece.AbilityRef -> {
                     withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Palette.on)) { append(abilityLetter(p.key)) }
-                    append('\u2009')
+                    // Narrow no-break space: a thin space would let the icon wrap away from its letter.
+                    append('\u202f')
                     appendInlineContent("ab_${p.key}", "[${p.key}]")
                 }
             }
