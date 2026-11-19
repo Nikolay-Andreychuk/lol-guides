@@ -1,0 +1,13 @@
+{
+  "name": "ARAM",
+  "map": "12",
+  "spellMode": "ARAM",
+  "startGold": 1400,
+  "itemsNote": "Items with maps[12]=true but maps[11]=false are mode-specific and must be reviewed here. Six-digit ids are mode variants (Arena, Mayhem) and are never offered.",
+  "itemReview": {
+    "3039": "exclude: Расплата Атмы — эксклюзив ARAM: Mayhem",
+    "4003": "exclude: Линия жизни — только карта 12, нет в Ущелье; считаем предметом Mayhem до проверки",
+    "4004": "exclude: Призрачная сабля — только карта 12, нет в Ущелье; считаем предметом Mayhem до проверки",
+    "6032": "exclude: Прибавка к показателям — служебный предмет"
+  }
+}
