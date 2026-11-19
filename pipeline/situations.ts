@@ -72,7 +72,7 @@ export async function situations(log = console.log) {
     "mapping: для каждого названия из списка выше — key записи, к которой оно относится.",
   ].join("\n");
 
-  const r = await runAgent(prompt, { schema: SCHEMA, tools: [] });
+  const r = await runAgent(prompt, { schema: SCHEMA, web: false });
   if (r.limit) throw new LimitReached(r.error);
   if (r.error || !r.body) throw new Error(`Агент не свёл названия: ${r.error ?? "пустой ответ"}`);
   const body = r.body as { dictionary: SituationDef[]; mapping: Array<{ name: string; key: string }> };

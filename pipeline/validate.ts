@@ -11,13 +11,15 @@ export interface Report {
 const LIMITS = {
   combo: [2, 4, 200],
   ability: [20, 700],
-  tip: [40, 1500],
+  tipIntro: [20, 300],
+  tipPoints: [3, 6],
+  tipPoint: [20, 350],
   note: 200,
   sitName: [2, 30],
   sitWhen: [5, 160],
   situations: 8,
   changes: 4,
-  sources: [1, 15],
+  sources: [1, 25],
 } as const;
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -148,8 +150,22 @@ export function validateGuide(
   if (!isObj(g.tips)) err("tips: не объект");
   else
     for (const k of TIP_KEYS) {
-      checkLen(g.tips[k], LIMITS.tip, `tips.${k}`, err);
-      texts.push([`tips.${k}`, g.tips[k]]);
+      const t = g.tips[k];
+      if (!isObj(t)) {
+        err(`tips.${k}: нужен объект с intro и points`);
+        continue;
+      }
+      if (t.intro !== null) {
+        checkLen(t.intro, LIMITS.tipIntro, `tips.${k}.intro`, err);
+        texts.push([`tips.${k}.intro`, t.intro]);
+      }
+      const [min, max] = LIMITS.tipPoints;
+      if (!Array.isArray(t.points) || t.points.length < min || t.points.length > max) err(`tips.${k}.points: от ${min} до ${max} пунктов`);
+      else
+        t.points.forEach((p, i) => {
+          checkLen(p, LIMITS.tipPoint, `tips.${k}.points[${i + 1}]`, err);
+          texts.push([`tips.${k}.points[${i + 1}]`, p]);
+        });
     }
   if (isObj(sk) && typeof sk.note === "string") texts.push(["skills.note", sk.note]);
   if (Array.isArray(g.situations))
@@ -157,6 +173,7 @@ export function validateGuide(
       if (isObj(s)) for (const f of ["name", "when"]) if (typeof s[f] === "string") texts.push([`situations[${n + 1}].${f}`, s[f]]);
 
   const names = officialNames(data);
+  const familiar = knownWords(data);
   for (const [where, t] of texts) {
     if (typeof t !== "string") {
       err(`${where}: не строка`);
@@ -167,7 +184,7 @@ export function validateGuide(
     for (const m of t.matchAll(/\{([^}]*)\}/g)) if (!(ABILITY_KEYS as readonly string[]).includes(m[1])) err(`${where}: токен {${m[1]}} — допустимы {P} {Q} {W} {E} {R}`);
     // JS \b is ASCII-only, so word edges for Cyrillic are spelled out.
     if (/(?<![а-яё])рун(а|ы|у|е|ой|ам|ами|ах)?(?![а-яё])/iu.test(t)) err(`${where}: руны не упоминаются`);
-    for (const w of nearMisses(t, names)) warnings.push(`${where}: «${w.word}» похоже на «${w.name}» — проверьте написание`);
+    for (const w of nearMisses(t, names, familiar)) warnings.push(`${where}: «${w.word}» похоже на «${w.name}» — проверьте написание`);
   }
 
   // Sources
@@ -227,14 +244,29 @@ export function officialNames(data: DDData): string[] {
   return [...out];
 }
 
-export function nearMisses(text: string, names: string[]): Array<{ word: string; name: string }> {
+/** Stems of capitalised words from item, summoner spell and ability names: written so, they are correct. */
+export function knownWords(data: DDData): Set<string> {
+  const out = new Set<string>();
+  const add = (name: string) => {
+    for (const m of name.matchAll(/[А-ЯЁ][а-яё]{4,}/g)) out.add(stem(m[0]));
+  };
+  for (const it of Object.values(data.items)) add(it.name);
+  for (const s of Object.values(data.summoners)) add(s.name);
+  for (const c of Object.values(data.champions)) {
+    add(c.passive.name);
+    for (const sp of c.spells) add(sp.name);
+  }
+  return out;
+}
+
+export function nearMisses(text: string, names: string[], known: Set<string> = new Set()): Array<{ word: string; name: string }> {
   const stems = new Map(names.map((n) => [stem(n), n]));
   const found: Array<{ word: string; name: string }> = [];
   const seen = new Set<string>();
   for (const m of text.matchAll(/[А-ЯЁ][а-яё]{4,}/g)) {
     const w = m[0];
     const sw = stem(w);
-    if (stems.has(sw) || seen.has(w) || [...stems.keys()].some((sn) => fleeting(sn) === sw)) continue;
+    if (stems.has(sw) || known.has(sw) || seen.has(w) || [...stems.keys()].some((sn) => fleeting(sn) === sw)) continue;
     for (const [sn, name] of stems) {
       if (sn.length < 5 || Math.abs(sn.length - sw.length) > 2 || sn[0] !== sw[0]) continue;
       const d = lev(sw, sn);

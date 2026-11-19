@@ -9,7 +9,8 @@ export type GuideSituation =
 
 export const SKILL_KEYS = ["Q", "W", "E"] as const;
 export const ABILITY_KEYS = ["P", "Q", "W", "E", "R"] as const;
-export const TIP_KEYS = ["early", "mid", "late", "teamfights", "mistakes", "versus"] as const;
+// The app titles these sections; their order here is the order on screen.
+export const TIP_KEYS = ["early", "mid", "late", "combos", "mistakes", "versus"] as const;
 export type AbilityKey = (typeof ABILITY_KEYS)[number];
 export type TipKey = (typeof TIP_KEYS)[number];
 
@@ -21,8 +22,14 @@ export interface GuideBody {
   skills: { mode: "max" | "turn" | "special"; order: Array<(typeof SKILL_KEYS)[number]>; note: string | null };
   combo: string[];
   abilities: Record<AbilityKey, string>;
-  tips: Record<TipKey, string>;
+  tips: Record<TipKey, TipSection>;
   sources: string[];
+}
+
+/** A section of advice: an optional lead sentence and a list of points. */
+export interface TipSection {
+  intro: string | null;
+  points: string[];
 }
 
 export interface Guide extends GuideBody {

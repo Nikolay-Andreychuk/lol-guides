@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CACHE, GUIDE_SCHEMA, ROOT, patchLabel } from "./config";
 import { eligibleItems, loadMode, modeSpells, plain, type ModeConfig } from "./catalog";
@@ -7,20 +8,32 @@ import { currentVersion, loadData, type DDData } from "./ddragon";
 import { ABILITY_KEYS, TIP_KEYS, type Guide, type GuideBody, type SituationDef } from "./types";
 import { validateGuide, type Report } from "./validate";
 
-const MODEL = process.env.ARAM_MODEL ?? "opus";
+// Codex model. gpt-6.2-sol is not offered to ChatGPT logins yet; switch here when it is.
+const MODEL = process.env.ARAM_MODEL ?? "gpt-6.1-sol";
 const PARALLEL = Number(process.env.ARAM_PARALLEL ?? 3);
 const TIMEOUT_MS = 20 * 60_000;
-// An empty working directory: the agent sees no repository files, no CLAUDE.md and no skills.
+// An empty working directory: the agent sees no repository files and no project AGENTS.md.
 const AGENT_CWD = join(CACHE, "agent-cwd");
+// Codex also loads AGENTS.md from its home. A separate home (its own `codex login`) keeps
+// personal instructions out of the agent's context; without it the default home is used.
+const CODEX_HOME = process.env.ARAM_CODEX_HOME;
+// `bun run` puts every parent's node_modules/.bin on PATH, where an old npm build of codex
+// may shadow the installed CLI; look it up on the PATH without those directories.
+const CODEX_BIN =
+  process.env.ARAM_CODEX ??
+  Bun.which("codex", { PATH: (process.env.PATH ?? "").split(":").filter((d) => !d.includes("node_modules/.bin")).join(":") }) ??
+  "codex";
 const SKILL_PATH = join(ROOT, ".claude/skills/aram-guide/SKILL.md");
 
 const str = { type: "string" } as const;
+const strOrNull = { type: ["string", "null"] } as const;
+// Codex sends the schema in strict mode: every property is required, absent values are null.
 export const OUTPUT_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: ["spells", "start", "build", "situations", "skills", "combo", "abilities", "tips", "sources"],
   properties: {
-    spells: { type: "array", items: str, minItems: 2, maxItems: 2 },
+    spells: { type: "array", items: str },
     start: {
       type: "array",
       items: {
@@ -30,23 +43,24 @@ export const OUTPUT_SCHEMA = {
         properties: { item: { type: "integer" }, count: { type: "integer" } },
       },
     },
-    build: { type: "array", items: { type: "integer" }, minItems: 6, maxItems: 6 },
+    build: { type: "array", items: { type: "integer" } },
     situations: {
       type: "array",
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["changes"],
+        required: ["key", "name", "when", "changes"],
         properties: {
-          key: str,
-          name: str,
-          when: str,
+          key: strOrNull,
+          name: strOrNull,
+          when: strOrNull,
           changes: {
             type: "array",
             items: {
-              type: "object",
-              additionalProperties: false,
-              properties: { replace: { type: "integer" }, with: { type: "integer" }, move: { type: "integer" }, to: { type: "integer" } },
+              anyOf: [
+                { type: "object", additionalProperties: false, required: ["replace", "with"], properties: { replace: { type: "integer" }, with: { type: "integer" } } },
+                { type: "object", additionalProperties: false, required: ["move", "to"], properties: { move: { type: "integer" }, to: { type: "integer" } } },
+              ],
             },
           },
         },
@@ -58,13 +72,23 @@ export const OUTPUT_SCHEMA = {
       required: ["mode", "order", "note"],
       properties: {
         mode: { enum: ["max", "turn", "special"] },
-        order: { type: "array", items: { enum: ["Q", "W", "E"] }, minItems: 3, maxItems: 3 },
-        note: { type: ["string", "null"] },
+        order: { type: "array", items: { enum: ["Q", "W", "E"] } },
+        note: strOrNull,
       },
     },
     combo: { type: "array", items: str },
     abilities: { type: "object", additionalProperties: false, required: [...ABILITY_KEYS], properties: Object.fromEntries(ABILITY_KEYS.map((k) => [k, str])) },
-    tips: { type: "object", additionalProperties: false, required: [...TIP_KEYS], properties: Object.fromEntries(TIP_KEYS.map((k) => [k, str])) },
+    tips: {
+      type: "object",
+      additionalProperties: false,
+      required: [...TIP_KEYS],
+      properties: Object.fromEntries(
+        TIP_KEYS.map((k) => [
+          k,
+          { type: "object", additionalProperties: false, required: ["intro", "points"], properties: { intro: strOrNull, points: { type: "array", items: str } } },
+        ]),
+      ),
+    },
     sources: { type: "array", items: str },
   },
 };
@@ -120,66 +144,90 @@ function stripMeta(g: Guide): GuideBody {
   return body;
 }
 
+export interface Usage {
+  input: number;
+  cached: number;
+  output: number;
+}
+
 export interface AgentRun {
   body?: unknown;
   sessionId?: string;
-  cost: number;
-  durationMs?: number;
-  turns?: number;
+  usage: Usage;
+  durationMs: number;
   error?: string;
   limit?: boolean;
 }
 
 export interface AgentOptions {
   schema: object;
-  /** Built-in tools the agent may use; empty for none. */
-  tools: string[];
+  /** Lets the agent search and read the web. */
+  web: boolean;
+  /** Continues an earlier run of the same agent, with its context. */
   resume?: string;
 }
 
+const LIMIT_RE = /usage limit|rate.?limit|quota|too many requests/i;
+
+export const addUsage = (a: Usage, b: Usage): Usage => ({ input: a.input + b.input, cached: a.cached + b.cached, output: a.output + b.output });
+export const formatUsage = (u: Usage) => `${Math.round(u.input / 1000)}k вход (${Math.round(u.cached / 1000)}k из кэша), ${Math.round(u.output / 1000)}k выход`;
+
+/** One `codex exec` run in a read-only sandbox, answering with JSON that matches the schema. */
 export async function runAgent(prompt: string, opts: AgentOptions): Promise<AgentRun> {
   mkdirSync(AGENT_CWD, { recursive: true });
-  const tools = opts.tools.join(",");
-  const args = [
-    "claude", "-p", prompt,
-    "--output-format", "json",
-    "--json-schema", JSON.stringify(opts.schema),
-    // --tools limits the set of tools; --allowedTools only pre-approves them for a headless run.
-    "--tools", tools,
-    ...(tools ? ["--allowedTools", tools] : []),
-    "--strict-mcp-config",
-    "--setting-sources", "project",
-    "--disable-slash-commands",
-    "--model", MODEL,
+  const dir = join(tmpdir(), `aram-agent-${process.pid}-${Math.random().toString(36).slice(2)}`);
+  mkdirSync(dir, { recursive: true });
+  const schemaFile = join(dir, "schema.json");
+  const outFile = join(dir, "out.json");
+  writeFileSync(schemaFile, JSON.stringify(opts.schema));
+  const flags = [
+    "-m", MODEL,
+    "--ignore-user-config",
+    "-c", 'sandbox_mode="read-only"',
+    "-c", 'approval_policy="never"',
+    "-c", `tools.web_search=${opts.web}`,
+    "-c", 'model_reasoning_effort="high"',
+    "-c", "project_doc_max_bytes=0",
+    "--skip-git-repo-check",
+    "--json",
+    "--output-schema", schemaFile,
+    "-o", outFile,
   ];
-  if (opts.resume) args.push("--resume", opts.resume);
-  const proc = Bun.spawn(args, { cwd: AGENT_CWD, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+  const args = opts.resume ? [CODEX_BIN, "exec", "resume", ...flags, opts.resume, prompt] : [CODEX_BIN, "exec", ...flags, prompt];
+  const started = Date.now();
+  const env = CODEX_HOME ? { ...process.env, CODEX_HOME } : process.env;
+  // stdin must be closed: codex exec otherwise waits for more prompt text on it.
+  const proc = Bun.spawn(args, { cwd: AGENT_CWD, env, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   const timer = setTimeout(() => proc.kill(), TIMEOUT_MS);
   const [out, err] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
   await proc.exited;
   clearTimeout(timer);
-  let d: Record<string, any>;
-  try {
-    d = JSON.parse(out);
-  } catch {
-    const msg = (out + err).trim().slice(-500) || `агент завершился с кодом ${proc.exitCode}`;
-    return { cost: 0, error: msg, limit: /limit|quota|usage/i.test(msg) };
-  }
-  const cost = Number(d.total_cost_usd ?? 0);
-  const stats = { durationMs: d.duration_ms, turns: d.num_turns };
-  if (d.is_error || d.subtype !== "success") {
-    const msg = String(d.result ?? d.subtype ?? "ошибка агента").slice(0, 500);
-    return { cost, ...stats, sessionId: d.session_id, error: msg, limit: /limit|quota|usage/i.test(msg) };
-  }
-  let body = d.structured_output;
-  if (body === undefined) {
+
+  const usage: Usage = { input: 0, cached: 0, output: 0 };
+  let sessionId = opts.resume;
+  let error: string | undefined;
+  for (const line of out.split("\n")) {
+    let e: Record<string, any>;
     try {
-      body = JSON.parse(d.result);
+      e = JSON.parse(line);
     } catch {
-      return { cost, ...stats, sessionId: d.session_id, error: "агент не вернул JSON по схеме" };
+      continue;
     }
+    if (e.type === "thread.started") sessionId = e.thread_id;
+    if (e.type === "turn.completed" && e.usage)
+      Object.assign(usage, addUsage(usage, { input: e.usage.input_tokens ?? 0, cached: e.usage.cached_input_tokens ?? 0, output: e.usage.output_tokens ?? 0 }));
+    if (e.type === "turn.failed" || e.type === "error") error = String(e.error?.message ?? e.message ?? "ошибка агента");
   }
-  return { body, sessionId: d.session_id, cost, ...stats };
+  const durationMs = Date.now() - started;
+  const text = existsSync(outFile) ? readFileSync(outFile, "utf8") : "";
+  rmSync(dir, { recursive: true, force: true });
+  if (!error && proc.exitCode !== 0) error = (err.trim().slice(-500) || `codex завершился с кодом ${proc.exitCode}`);
+  if (error) return { sessionId, usage, durationMs, error: error.slice(0, 500), limit: LIMIT_RE.test(error) };
+  try {
+    return { body: JSON.parse(text), sessionId, usage, durationMs };
+  } catch {
+    return { sessionId, usage, durationMs, error: `агент не вернул JSON по схеме (код ${proc.exitCode}): ${(err + out).trim().slice(-300)}` };
+  }
 }
 
 /** Keeps only known fields in a fixed order, so guide files diff cleanly between patches. */
@@ -190,14 +238,20 @@ export function normalize(body: any, dict: SituationDef[]): GuideBody {
     start: body.start,
     build: body.build,
     situations: (body.situations ?? []).map((s: any) =>
-      typeof s.key === "string" && (keys.has(s.key) || s.name === undefined)
+      typeof s.key === "string" && (keys.has(s.key) || typeof s.name !== "string")
         ? { key: s.key, changes: s.changes }
         : { name: s.name, when: s.when, changes: s.changes },
     ),
     skills: { mode: body.skills?.mode, order: body.skills?.order, note: body.skills?.note?.trim() ? body.skills.note.trim() : null },
     combo: body.combo,
     abilities: body.abilities,
-    tips: body.tips,
+    tips: Object.fromEntries(
+      TIP_KEYS.map((k) => {
+        const t = body.tips?.[k];
+        const intro = typeof t?.intro === "string" && t.intro.trim() ? t.intro.trim() : null;
+        return [k, { intro, points: Array.isArray(t?.points) ? t.points.map((p: unknown) => (typeof p === "string" ? p.trim() : p)) : t?.points }];
+      }),
+    ) as GuideBody["tips"],
     sources: body.sources,
   };
 }
@@ -207,28 +261,29 @@ export class LimitReached extends Error {}
 interface Outcome {
   champion: string;
   ok: boolean;
-  cost: number;
+  usage: Usage;
   report: Report;
   note?: string;
 }
 
 async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
-  const prev = loadGuide(champion);
+  // A forced run writes the guide afresh instead of updating the old one.
+  const prev = ctx.fresh ? null : loadGuide(champion);
   const facts = buildFacts(champion, ctx.data, ctx.mode, ctx.dict, prev);
   const prompt = `${ctx.skill}\n\n${facts}\n\nСоставь гайд для чемпиона ${ctx.data.champions[champion].name} и верни его JSON по схеме.`;
   const log: Record<string, unknown> = { champion, model: MODEL, ddragon: ctx.data.version };
-  let cost = 0;
+  let usage: Usage = { input: 0, cached: 0, output: 0 };
   const finish = (o: Outcome) => {
     writeFileSync(join(ctx.runDir, `${champion}.json`), JSON.stringify({ ...log, outcome: o }, null, 2));
     return o;
   };
 
-  const web = { schema: OUTPUT_SCHEMA, tools: ["WebSearch", "WebFetch"] };
+  const web = { schema: OUTPUT_SCHEMA, web: true };
   const first = await runAgent(prompt, web);
-  cost += first.cost;
+  usage = addUsage(usage, first.usage);
   log.first = first;
   if (first.limit) throw new LimitReached(first.error);
-  if (first.error) return finish({ champion, ok: false, cost, report: { errors: [first.error], warnings: [] } });
+  if (first.error) return finish({ champion, ok: false, usage, report: { errors: [first.error], warnings: [] } });
 
   let body = normalize(first.body, ctx.dict);
   let report = validateGuide(body, champion, ctx.data, ctx.mode, ctx.dict);
@@ -240,16 +295,16 @@ async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
       ...report.warnings.map((w) => `Предупреждение: ${w}. Если название написано верно (например, это обычное слово), оставь как есть.`),
     ].join("\n");
     const second = await runAgent(fix, { ...web, resume: first.sessionId });
-    cost += second.cost;
+    usage = addUsage(usage, second.usage);
     log.second = second;
     if (second.limit) throw new LimitReached(second.error);
-    if (second.error) return finish({ champion, ok: false, cost, report: { errors: [second.error], warnings: [] } });
+    if (second.error) return finish({ champion, ok: false, usage, report: { errors: [second.error], warnings: [] } });
     body = normalize(second.body, ctx.dict);
     report = validateGuide(body, champion, ctx.data, ctx.mode, ctx.dict);
-    if (report.errors.length) return finish({ champion, ok: false, cost, report, note: prev ? "остался старый гайд" : "гайда нет" });
+    if (report.errors.length) return finish({ champion, ok: false, usage, report, note: prev ? "остался старый гайд" : "гайда нет" });
   }
   saveGuide({ schema: GUIDE_SCHEMA, champion, ddragon: ctx.data.version, ...body });
-  return finish({ champion, ok: true, cost, report });
+  return finish({ champion, ok: true, usage, report });
 }
 
 interface Ctx {
@@ -258,6 +313,7 @@ interface Ctx {
   dict: SituationDef[];
   skill: string;
   runDir: string;
+  fresh: boolean;
 }
 
 export interface GenerateOptions {
@@ -275,6 +331,7 @@ export async function generate(opts: GenerateOptions = {}, log = console.log) {
     dict: loadDictionary(),
     skill: stripSkillHeader(readFileSync(SKILL_PATH, "utf8")),
     runDir: join(CACHE, "runs", new Date().toISOString().replace(/[:.]/g, "-")),
+    fresh: Boolean(opts.force),
   };
   mkdirSync(ctx.runDir, { recursive: true });
 
@@ -300,18 +357,18 @@ export async function generate(opts: GenerateOptions = {}, log = console.log) {
           const o = await generateOne(champion, ctx);
           outcomes.push(o);
           const warn = o.report.warnings.length ? `, предупреждений: ${o.report.warnings.length}` : "";
-          log(`${o.ok ? "✓" : "✗"} ${champion} ($${o.cost.toFixed(2)}${warn})${o.ok ? "" : `: ${o.report.errors.slice(0, 3).join("; ")}${o.note ? ` — ${o.note}` : ""}`}`);
+          log(`${o.ok ? "✓" : "✗"} ${champion} (${formatUsage(o.usage)}${warn})${o.ok ? "" : `: ${o.report.errors.slice(0, 3).join("; ")}${o.note ? ` — ${o.note}` : ""}`}`);
         } catch (e) {
           if (e instanceof LimitReached) stop = e.message;
-          else outcomes.push({ champion, ok: false, cost: 0, report: { errors: [String(e)], warnings: [] } });
+          else outcomes.push({ champion, ok: false, usage: { input: 0, cached: 0, output: 0 }, report: { errors: [String(e)], warnings: [] } });
         }
       }
     }),
   );
   const ok = outcomes.filter((o) => o.ok).map((o) => o.champion);
   const failed = outcomes.filter((o) => !o.ok).map((o) => o.champion);
-  const total = outcomes.reduce((s, o) => s + o.cost, 0);
-  log(`Готово: ${ok.length}, не вышло: ${failed.length}${failed.length ? ` (${failed.join(", ")})` : ""}. Расход по ценам API: $${total.toFixed(2)}.`);
+  const total = outcomes.reduce((s, o) => addUsage(s, o.usage), { input: 0, cached: 0, output: 0 });
+  log(`Готово: ${ok.length}, не вышло: ${failed.length}${failed.length ? ` (${failed.join(", ")})` : ""}. Токены: ${formatUsage(total)}.`);
   if (stop) log(`Остановлено: лимит подписки (${stop.slice(0, 200)}). Запустите команду позже — готовые гайды пропускаются.`);
   return { ok, failed, stopped: stop };
 }

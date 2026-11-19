@@ -8,7 +8,7 @@ import type { DDData } from "../ddragon";
 import { normalize } from "../generate";
 import { resolveBuilds } from "../pack";
 import type { Guide, GuideBody, SituationDef } from "../types";
-import { nearMisses, officialNames, validateGuide } from "../validate";
+import { knownWords, nearMisses, officialNames, validateGuide } from "../validate";
 
 const fx = (f: string) => JSON.parse(readFileSync(join(import.meta.dir, "fixtures", f), "utf8"));
 const data: DDData = fx("dd-16.23.1.json");
@@ -76,9 +76,11 @@ describe("validateGuide", () => {
     ["change that changes nothing", (b) => (b.situations[0].changes = [{ move: b.build[0], to: 1 }]), /не меняют/],
     ["unknown dictionary key", (b) => (b.situations[0] = { key: "nope", changes: b.situations[0].changes }), /нет в словаре/],
     ["bad token", (b) => (b.combo[0] = "{X} затем {Q}"), /токен \{X\}/],
-    ["markup", (b) => (b.tips.early = "**Важно**: " + b.tips.early), /разметка/],
-    ["link in text", (b) => (b.tips.mid += " https://example.com"), /ссылки/],
-    ["runes", (b) => (b.tips.late += " Руны не важны."), /руны/],
+    ["markup", (b) => (b.tips.early.points[0] = "**Важно**: " + b.tips.early.points[0]), /разметка/],
+    ["link in text", (b) => (b.tips.mid.points[0] += " https://example.com"), /ссылки/],
+    ["runes", (b) => (b.tips.late.points[0] += " Руны не важны."), /руны/],
+    ["tips as plain text", (b) => (b.tips.early = "Держись позади союзников и бросай сферу через волну."), /tips\.early: нужен объект/],
+    ["too few tip points", (b) => (b.tips.combos.points = b.tips.combos.points.slice(0, 2)), /tips\.combos\.points: от 3/],
     ["special without note", (b) => (b.skills = { mode: "special", order: ["Q", "W", "E"], note: null }), /нужна note/],
     ["order not a permutation", (b) => (b.skills.order = ["Q", "Q", "E"]), /перестановка/],
     ["too short ability text", (b) => (b.abilities.R = "Рывок."), /abilities\.R: длина/],
@@ -92,7 +94,7 @@ describe("validateGuide", () => {
 
   test("a misspelt champion name is a warning, inflected names are not", () => {
     const b = body();
-    b.tips.versus = "Против Аатрокса держитесь дальше. Против Сораки бейте лекаря. Мисс Фортуне не стойте в линию.";
+    b.tips.versus.points[0] = "Против Аатрокса держись дальше. Против Сораки бей лекаря. Мисс Фортуне не стой в линию.";
     const w = check(b).warnings;
     expect(w).toHaveLength(1);
     expect(w[0]).toMatch(/Аатрокса.*Атрокс/);
@@ -101,6 +103,11 @@ describe("validateGuide", () => {
 
 describe("nearMisses", () => {
   const names = officialNames(data);
+  test("words from item names are not flagged", () => {
+    const text = "Много танков: собирай Мучения Лиандри.";
+    expect(nearMisses(text, ["Лиссандра"])).toHaveLength(1);
+    expect(nearMisses(text, ["Лиссандра"], knownWords(data))).toEqual([]);
+  });
   test("fleeting vowel and case endings are not flagged", () => {
     expect(nearMisses("После Атроксом и Сорака, Сораке.", names)).toEqual([]);
   });
@@ -122,6 +129,23 @@ describe("resolveBuilds", () => {
     expect(b.map((x) => x.name)).toEqual(["Обычно", "Много хила", "Танки", "Своё"]);
     expect(b[3].key).toBe("n:Своё");
     expect(b[1].items[5]).toEqual({ item: 3165, replaced: g.build[5] });
+  });
+});
+
+describe("normalize", () => {
+  test("strict-mode nulls pick the key or the named form of a situation", () => {
+    const d: SituationDef[] = [{ key: "heal", name: "Много хила", when: "Сорака" }];
+    const changes = [{ replace: 1, with: 2 }];
+    const n = normalize(
+      { ...ahri, situations: [{ key: "heal", name: null, when: null, changes }, { key: null, name: "Танки", when: "Три танка", changes }] },
+      d,
+    );
+    expect(n.situations).toEqual([{ key: "heal", changes }, { name: "Танки", when: "Три танка", changes }]);
+  });
+  test("a blank intro becomes null and points are trimmed", () => {
+    const tips = structuredClone(ahri.tips);
+    tips.early = { intro: "  ", points: [" Пункт один. "] };
+    expect(normalize({ ...ahri, tips }, dict).tips.early).toEqual({ intro: null, points: ["Пункт один."] });
   });
 });
 
