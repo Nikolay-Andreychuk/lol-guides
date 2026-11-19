@@ -165,7 +165,8 @@ export function validateGuide(
     if (/https?:|www\./i.test(t)) err(`${where}: ссылки в тексте не нужны`);
     if (/[<>*#`[\]]/.test(t)) err(`${where}: разметка не нужна, только простой текст`);
     for (const m of t.matchAll(/\{([^}]*)\}/g)) if (!(ABILITY_KEYS as readonly string[]).includes(m[1])) err(`${where}: токен {${m[1]}} — допустимы {P} {Q} {W} {E} {R}`);
-    if (/\bрун[аыуеой]?\b|\bрунам|\bрунами/i.test(t)) err(`${where}: руны не упоминаются`);
+    // JS \b is ASCII-only, so word edges for Cyrillic are spelled out.
+    if (/(?<![а-яё])рун(а|ы|у|е|ой|ам|ами|ах)?(?![а-яё])/iu.test(t)) err(`${where}: руны не упоминаются`);
     for (const w of nearMisses(t, names)) warnings.push(`${where}: «${w.word}» похоже на «${w.name}» — проверьте написание`);
   }
 

@@ -95,6 +95,9 @@ export function buildFacts(champion: string, data: DDData, mode: ModeConfig, dic
     "## Умения (официальные русские названия и описания)",
     ...abilities,
     "",
+    "## Официальные имена чемпионов (пиши именно так, склоняя как обычно)",
+    Object.values(data.champions).map((x) => x.name).sort((a, b) => a.localeCompare(b, "ru")).join(", "),
+    "",
     "## Заклинания режима (id — название)",
     ...modeSpells(data, mode).map((s) => `${s.id} — ${s.name}`),
     "",
@@ -117,7 +120,7 @@ function stripMeta(g: Guide): GuideBody {
   return body;
 }
 
-interface AgentRun {
+export interface AgentRun {
   body?: unknown;
   sessionId?: string;
   cost: number;
@@ -127,21 +130,29 @@ interface AgentRun {
   limit?: boolean;
 }
 
-async function runAgent(prompt: string, resume?: string): Promise<AgentRun> {
+export interface AgentOptions {
+  schema: object;
+  /** Built-in tools the agent may use; empty for none. */
+  tools: string[];
+  resume?: string;
+}
+
+export async function runAgent(prompt: string, opts: AgentOptions): Promise<AgentRun> {
   mkdirSync(AGENT_CWD, { recursive: true });
+  const tools = opts.tools.join(",");
   const args = [
     "claude", "-p", prompt,
     "--output-format", "json",
-    "--json-schema", JSON.stringify(OUTPUT_SCHEMA),
+    "--json-schema", JSON.stringify(opts.schema),
     // --tools limits the set of tools; --allowedTools only pre-approves them for a headless run.
-    "--tools", "WebSearch,WebFetch",
-    "--allowedTools", "WebSearch,WebFetch",
+    "--tools", tools,
+    ...(tools ? ["--allowedTools", tools] : []),
     "--strict-mcp-config",
     "--setting-sources", "project",
     "--disable-slash-commands",
     "--model", MODEL,
   ];
-  if (resume) args.push("--resume", resume);
+  if (opts.resume) args.push("--resume", opts.resume);
   const proc = Bun.spawn(args, { cwd: AGENT_CWD, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   const timer = setTimeout(() => proc.kill(), TIMEOUT_MS);
   const [out, err] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
@@ -191,7 +202,7 @@ export function normalize(body: any, dict: SituationDef[]): GuideBody {
   };
 }
 
-class LimitReached extends Error {}
+export class LimitReached extends Error {}
 
 interface Outcome {
   champion: string;
@@ -212,7 +223,8 @@ async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
     return o;
   };
 
-  const first = await runAgent(prompt);
+  const web = { schema: OUTPUT_SCHEMA, tools: ["WebSearch", "WebFetch"] };
+  const first = await runAgent(prompt, web);
   cost += first.cost;
   log.first = first;
   if (first.limit) throw new LimitReached(first.error);
@@ -220,14 +232,14 @@ async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
 
   let body = normalize(first.body, ctx.dict);
   let report = validateGuide(body, champion, ctx.data, ctx.mode, ctx.dict);
-  // Only errors cost a second agent turn; warnings are heuristics and ride along when a retry happens anyway.
-  if (report.errors.length) {
+  // Warnings get one retry too: in the trial run every misspelt-name warning was real («Аатрокс», «Малфит»).
+  if (report.errors.length || report.warnings.length) {
     const fix = [
       "Проверка гайда нашла проблемы. Исправь их и верни гайд целиком по той же схеме.",
       ...report.errors.map((e) => `Ошибка: ${e}`),
       ...report.warnings.map((w) => `Предупреждение: ${w}. Если название написано верно (например, это обычное слово), оставь как есть.`),
     ].join("\n");
-    const second = await runAgent(fix, first.sessionId);
+    const second = await runAgent(fix, { ...web, resume: first.sessionId });
     cost += second.cost;
     log.second = second;
     if (second.limit) throw new LimitReached(second.error);

@@ -1,5 +1,8 @@
 import { generate } from "./generate";
 import { pack } from "./pack";
+import { patch } from "./patch";
+import { publish } from "./publish";
+import { situations } from "./situations";
 import { sync } from "./sync";
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -18,7 +21,10 @@ const commands: Record<string, () => Promise<unknown>> = {
       force: has("force"),
       limit: flag("limit") ? Number(flag("limit")) : undefined,
     }),
+  situations: () => situations(),
   pack: () => pack(),
+  publish: () => publish(),
+  patch: () => patch(),
 };
 
 const run = commands[cmd ?? ""];
