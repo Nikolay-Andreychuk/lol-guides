@@ -86,6 +86,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     val guide = pack.data.guides[championId] ?: return
     val abilityIcons = remember(champ) { champ.abilities.orEmpty().mapValues { it.value.icon } }
     var sheetItem by rememberSaveable { mutableStateOf<Int?>(null) }
+    var sheetAbility by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         Header(pack, champ, guide, onBack)
@@ -127,7 +128,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
                         layout(p.width, p.height + off) { p.place(0, off) }
                     },
             ) {
-                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it })
+                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it }, onAbility = { sheetAbility = it })
             }
 
             val pager = rememberPagerState { TABS.size }
@@ -163,6 +164,22 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
                     0 -> BuyTab(pack, guide, onItem = { sheetItem = it })
                     1 -> AbilitiesTab(pack, champ, guide, abilityIcons)
                     else -> TipsTab(pack, guide, abilityIcons)
+                }
+            }
+        }
+    }
+
+    sheetAbility?.let { key ->
+        ModalBottomSheet(onDismissRequest = { sheetAbility = null }, containerColor = Palette.s1) {
+            Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true)
+                    Spacer(Modifier.width(12.dp))
+                    Text(champ.abilities?.get(key)?.name ?: abilityLetter(key), color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                }
+                guide.abilities[key]?.let {
+                    Spacer(Modifier.height(12.dp))
+                    RichText(it, pack, abilityIcons, BODY)
                 }
             }
         }
@@ -223,7 +240,7 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
 }
 
 @Composable
-private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>, onItem: (Int) -> Unit) {
+private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>, onItem: (Int) -> Unit, onAbility: (String) -> Unit) {
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             MemoGroup("Заклинания") {
@@ -255,7 +272,16 @@ private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, Strin
                 MemoGroup(if (sk.mode == "max") "Макс. прокачка" else "Прокачка по очереди") {
                     sk.order.forEachIndexed { i, key ->
                         if (i > 0) Text("›", color = Palette.faint, fontSize = 16.sp, modifier = Modifier.align(Alignment.CenterVertically))
-                        AbilityBadge(pack, abilityIcons[key], key, Modifier.size(32.dp), letter = true)
+                        AbilityBadge(
+                            pack,
+                            abilityIcons[key],
+                            key,
+                            Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(22))
+                                .clickable { onAbility(key) },
+                            letter = true,
+                        )
                     }
                 }
             }
