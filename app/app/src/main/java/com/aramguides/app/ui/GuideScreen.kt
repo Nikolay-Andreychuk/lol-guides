@@ -69,12 +69,12 @@ import kotlin.math.roundToInt
 
 private val TABS = listOf("Покупка", "Умения", "Советы")
 private val TIP_TITLES = listOf(
-    "early" to "Начало",
-    "mid" to "Середина",
-    "late" to "Конец",
-    "teamfights" to "Командные бои",
-    "mistakes" to "Типичные ошибки",
-    "versus" to "Против составов",
+    "early" to "Начало игры (до 6 уровня)",
+    "mid" to "Середина игры (после 6 уровня)",
+    "late" to "Конец игры",
+    "combos" to "Продвинутые комбинации",
+    "mistakes" to "Позиционирование и типичные ошибки",
+    "versus" to "Против разных составов",
 )
 private val BODY = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Palette.body)
 
@@ -427,12 +427,17 @@ private fun TipsTab(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, St
 
 private fun LazyListScope.tipSections(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>) {
     TIP_TITLES.forEach { (key, title) ->
-        val text = guide.tips[key]?.takeIf { it.isNotBlank() } ?: return@forEach
+        val section = guide.tips[key]?.takeIf { it.points.isNotEmpty() } ?: return@forEach
         item(key = key) {
-            Column(Modifier.padding(bottom = 16.dp)) {
-                Text(title, color = Palette.on, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(4.dp))
-                RichText(text, pack, abilityIcons, BODY)
+            Column(Modifier.padding(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(title, color = Palette.on, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                section.intro?.let { RichText(it, pack, abilityIcons, BODY.copy(color = Palette.muted)) }
+                section.points.forEach { point ->
+                    Row {
+                        Text("•", style = BODY, modifier = Modifier.width(16.dp))
+                        RichText(point, pack, abilityIcons, BODY, Modifier.weight(1f))
+                    }
+                }
             }
         }
     }

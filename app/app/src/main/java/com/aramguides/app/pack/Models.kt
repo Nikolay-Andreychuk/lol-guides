@@ -52,8 +52,11 @@ data class Guide(
     val skills: Skills,
     val combo: List<String>,
     val abilities: Map<String, String>,
-    val tips: Map<String, String>,
+    val tips: Map<String, TipSection>,
 )
+
+@Serializable
+data class TipSection(val intro: String? = null, val points: List<String>)
 
 @Serializable
 data class StartItem(val item: Int, val count: Int)

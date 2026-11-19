@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +61,7 @@ private val GREY = ColorFilter.colorMatrix(
     },
 )
 
-/** Guide text with {P}{Q}{W}{E}{R} drawn as small ability icons. */
+/** Guide text with {P}{Q}{W}{E}{R} drawn as the ability letter followed by its small icon. */
 @Composable
 fun RichText(
     text: String,
@@ -73,7 +75,11 @@ fun RichText(
         buildAnnotatedString {
             for (p in pieces) when (p) {
                 is Piece.Text -> append(p.text)
-                is Piece.AbilityRef -> appendInlineContent("ab_${p.key}", "[${p.key}]")
+                is Piece.AbilityRef -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Palette.on)) { append(abilityLetter(p.key)) }
+                    append('\u2009')
+                    appendInlineContent("ab_${p.key}", "[${p.key}]")
+                }
             }
         }
     }
