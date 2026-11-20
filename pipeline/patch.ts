@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DIST, LANG, MODE } from "./config";
 import { dictionaryPath, guidesDir, listGuides } from "./content";
-import { loadData } from "./ddragon";
+import { COMPLETE, ddragonDir, loadData } from "./ddragon";
 import { generate } from "./generate";
 import { latestName, pack } from "./pack";
 import { publish, publishedVersion } from "./publish";
@@ -18,12 +18,12 @@ async function packAndPublish(log: (s: string) => void) {
   }
 }
 
-/** True when the release names the newest local pack and no guide changed after that pack was built. */
-async function published(): Promise<boolean> {
+/** True when the release names the newest local pack and neither Riot data nor a guide changed after that pack was built. */
+async function published(version: string): Promise<boolean> {
   const latestPath = join(DIST, MODE, LANG, latestName());
   if (!existsSync(latestPath)) return false;
   const builtAt = statSync(latestPath).mtimeMs;
-  const sources = [dictionaryPath(), ...readdirSync(guidesDir()).map((f) => join(guidesDir(), f))];
+  const sources = [join(ddragonDir(version), COMPLETE), dictionaryPath(), ...readdirSync(guidesDir()).map((f) => join(guidesDir(), f))];
   if (sources.some((p) => statSync(p).mtimeMs > builtAt)) return false;
   return (await publishedVersion()) === JSON.parse(readFileSync(latestPath, "utf8")).version;
 }
@@ -37,15 +37,16 @@ export async function patch(log = console.log) {
   const named = () => listGuides().some((g) => g.situations.some((s) => "name" in s));
   let stopped = false;
   if (!changed && todo === 0) {
-    if (!named() && (await published())) {
+    if (!named() && (await published(version))) {
       log("Новых данных Riot нет, все гайды актуальны и опубликованы. Если патч уже вышел, Data Dragon может отставать до пары дней.");
       return;
     }
     // An earlier run generated guides but stopped before the dictionary or the upload.
     log("Гайды актуальны, но последний пакет не собран или не опубликован. Доделываю.");
   } else {
-    // Publishing right after sync lets phones show «Гайд для …» and removed items while generation runs.
-    if (changed) await packAndPublish(log);
+    // Publishing before generation lets phones show «Гайд для …» and removed items while it runs.
+    // A run that stopped after sync but before this upload, or a separate `sync`, gets it here too.
+    if (changed || !(await published(version))) await packAndPublish(log);
     stopped = Boolean((await generate({}, log)).stopped);
   }
   // After a limit stop the dictionary agent would hit the same limit; named situations pack as they are.

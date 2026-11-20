@@ -31,6 +31,16 @@ function namingRules(): string {
   return m[1].trim();
 }
 
+/** A `versus` point starts with a situation name; when the dictionary merges that name into
+ * another, the point is renamed with the chip so the two screens keep agreeing. */
+export function renameVersus(points: string[], renames: Map<string, string>): string[] {
+  return points.map((p) => {
+    const i = p.indexOf(":");
+    const to = i > 0 ? renames.get(p.slice(0, i).trim()) : undefined;
+    return to ? `${to}${p.slice(i)}` : p;
+  });
+}
+
 /**
  * Folds the situation names agents wrote into the shared dictionary and rewrites
  * guides to reference dictionary keys. Existing entries keep their key, name and
@@ -100,12 +110,15 @@ export async function situations(log = console.log) {
   // The dictionary only grows, so writing it first leaves no guide pointing at a missing key if
   // the run stops while guides are rewritten; a rerun then finishes the rewrite.
   writeJsonAtomic(dictionaryPath(), next);
+  const nameOf = new Map(next.map((d) => [d.key, d.name]));
   for (const g of guides) {
     if (!g.situations.some((s) => "name" in s)) continue;
     const seen = new Set<string>();
     const out: GuideSituation[] = [];
+    const renames = new Map<string, string>();
     for (const s of g.situations) {
       const key = "key" in s ? s.key : map.get(s.name.trim())!;
+      if ("name" in s && nameOf.get(key) !== s.name.trim()) renames.set(s.name.trim(), nameOf.get(key)!);
       if (seen.has(key)) {
         log(`  ${g.champion}: «${"name" in s ? s.name : key}» совпала с другой ситуацией этого гайда (${key}), оставлена первая`);
         continue;
@@ -113,7 +126,8 @@ export async function situations(log = console.log) {
       seen.add(key);
       out.push({ key, changes: s.changes });
     }
-    saveGuide({ ...g, situations: out });
+    const versus = { ...g.tips.versus, points: renameVersus(g.tips.versus.points, renames) };
+    saveGuide({ ...g, situations: out, tips: { ...g.tips, versus } });
   }
   log(`Словарь: ${next.length} записей (новых ${next.length - dict.length}).`);
   for (const d of next.slice(dict.length)) log(`  ${d.key} — ${d.name} (${uses.get(d.key)} гайд.)`);

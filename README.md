@@ -36,4 +36,6 @@ cd app && ./gradlew assembleDebug
 ## Тесты
 ```bash
 bun test pipeline
+bun pipeline pack && (cd app && ./gradlew testDebugUnitTest)
 ```
+Тесты приложения читают собранный пакет: так проверяется, что приложение понимает то, что собирает конвейер.

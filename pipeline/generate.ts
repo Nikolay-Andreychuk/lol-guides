@@ -174,8 +174,9 @@ export const formatUsage = (u: Usage) => `${Math.round(u.input / 1000)}k вхо�
 
 /** Codex features that reach the local machine beyond web search; all are turned off for guide runs. */
 const HOST_TOOLS = ["shell_tool", "unified_exec", "browser_use", "browser_use_external", "in_app_browser", "computer_use", "apps", "view_image"];
-/** Event items that mean the agent touched the machine anyway, e.g. after a Codex update adds a tool. */
-const HOST_ITEMS = new Set(["command_execution", "file_change", "mcp_tool_call"]);
+/** The only event items a guide run produces. Anything else (a command, a file change, a sub-agent,
+ * a tool a later Codex adds) means the agent reached past web search, so the run is discarded. */
+const RUN_ITEMS = new Set(["agent_message", "reasoning", "web_search", "todo_list", "error"]);
 
 /** Reads `codex exec --json` output: session id, token usage, the failure if the run failed, and Codex's last error notice. */
 export function readEvents(out: string): { sessionId?: string; usage: Usage; error?: string; notice?: string } {
@@ -197,8 +198,8 @@ export function readEvents(out: string): { sessionId?: string; usage: Usage; err
     if (e.type === "turn.failed") failed ??= String(e.error?.message ?? "");
     // Codex also reports errors it is still retrying («Reconnecting… 1/5»); only a failed turn fails the run.
     if (e.type === "error") notice = String(e.message ?? e.error?.message ?? "");
-    if (e.type?.startsWith("item.") && HOST_ITEMS.has(e.item?.type))
-      host ??= `агент обратился к компьютеру (${e.item.type}), ответ отброшен`;
+    if (e.type?.startsWith("item.") && !RUN_ITEMS.has(e.item?.type))
+      host ??= `агент вышел за пределы веб-поиска (${e.item.type}), ответ отброшен`;
   }
   const error = host ?? (failed === undefined ? undefined : failed || notice || "ошибка агента");
   return { sessionId, usage, error, notice };

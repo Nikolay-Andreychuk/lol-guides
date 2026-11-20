@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { CACHE, DDRAGON_BASE, LOCALE, compareVersions, patchLabel } from "./config";
 
 export const ddragonDir = (v: string) => join(CACHE, "ddragon", v);
-const COMPLETE = ".complete";
+export const COMPLETE = ".complete";
 
 export class HttpError extends Error {
   constructor(public status: number, url: string) {

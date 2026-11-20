@@ -7,6 +7,7 @@ import { patchLabel } from "../config";
 import type { DDData } from "../ddragon";
 import { normalize, readEvents } from "../generate";
 import { resolveBuilds } from "../pack";
+import { renameVersus } from "../situations";
 import type { Guide, GuideBody, SituationDef } from "../types";
 import { knownWords, nearMisses, officialNames, validateGuide } from "../validate";
 
@@ -130,6 +131,21 @@ describe("readEvents", () => {
   test("a command run by the agent fails the run", () => {
     const r = readEvents([line({ type: "item.started", item: { type: "command_execution", command: "cat ~/.ssh/id_rsa" } }), line({ type: "turn.completed", usage: { input_tokens: 1 } })].join("\n"));
     expect(r.error).toMatch(/command_execution/);
+  });
+  test("an item type a guide run never produces fails the run", () => {
+    const r = readEvents([line({ type: "item.started", item: { type: "collab_tool_call" } }), line({ type: "turn.completed", usage: { input_tokens: 1 } })].join("\n"));
+    expect(r.error).toMatch(/collab_tool_call/);
+  });
+  test("web search and messages pass", () => {
+    const r = readEvents([line({ type: "item.completed", item: { type: "web_search" } }), line({ type: "item.completed", item: { type: "agent_message" } }), line({ type: "turn.completed", usage: { input_tokens: 1 } })].join("\n"));
+    expect(r.error).toBeUndefined();
+  });
+});
+
+describe("renameVersus", () => {
+  test("a merged situation name is renamed in versus headings only", () => {
+    const points = ["Невидимки: держи метку.", "Много хила: Мореллономикон раньше.", "Без двоеточия Невидимки"];
+    expect(renameVersus(points, new Map([["Невидимки", "Много невидимок"]]))).toEqual(["Много невидимок: держи метку.", "Много хила: Мореллономикон раньше.", "Без двоеточия Невидимки"]);
   });
 });
 

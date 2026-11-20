@@ -44,8 +44,6 @@ class AppViewModel(app: Application, private val saved: SavedStateHandle) : Andr
     var query by mutableStateOf(TextFieldValue(saved.get<String>("query").orEmpty()))
         private set
 
-    /** Set when returning from a guide: the search field selects the old query so typing replaces it. */
-
     var recent by mutableStateOf(prefs.getString("recent", "").orEmpty().split(",").filter { it.isNotBlank() })
         private set
 
