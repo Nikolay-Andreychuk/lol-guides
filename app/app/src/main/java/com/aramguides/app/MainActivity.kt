@@ -17,7 +17,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +67,6 @@ fun App(vm: AppViewModel) {
                 GuideScreen(guidePack, champion, onBack = vm::closeGuide)
             }
             else -> holder.SaveableStateProvider("search") {
-                LaunchedEffect(Unit) { vm.selectQueryOnReturn = false }
                 SearchScreen(
                     pack = pack,
                     query = vm.query,

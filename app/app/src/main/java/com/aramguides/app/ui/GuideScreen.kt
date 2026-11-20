@@ -241,10 +241,16 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>, onItem: (Int) -> Unit, onAbility: (String) -> Unit) {
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        // Wraps instead of squeezing: four start items and a skill order don't fit one line at 360 dp.
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             MemoGroup("Заклинания") {
                 guide.spells.forEach { PackIcon(pack, pack.data.spells[it]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp)) }
             }

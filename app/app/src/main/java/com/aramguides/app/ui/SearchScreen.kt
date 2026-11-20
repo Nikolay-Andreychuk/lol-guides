@@ -112,7 +112,7 @@ fun SearchScreen(
                 }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { result.ids.firstOrNull()?.let(::open) }),
+            keyboardActions = KeyboardActions(onGo = { if (query.text.isNotBlank()) result.ids.firstOrNull()?.let(::open) }),
             shape = RoundedCornerShape(28.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Palette.s1,

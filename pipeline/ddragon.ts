@@ -101,7 +101,7 @@ export function hasData(version: string): boolean {
   return existsSync(join(ddragonDir(version), COMPLETE));
 }
 
-async function pool<T>(items: T[], n: number, fn: (t: T) => Promise<void>) {
+export async function pool<T>(items: T[], n: number, fn: (t: T) => Promise<void>) {
   let i = 0;
   await Promise.all(
     Array.from({ length: Math.min(n, items.length) }, async () => {

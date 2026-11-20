@@ -15,7 +15,9 @@ async function gh(args: string[], allowFail = false): Promise<string> {
 
 /**
  * Uploads the newest pack, then replaces the pointer file, so the app never sees a
- * pointer to a pack that is not there yet. The previous pack stays for rollback.
+ * pointer to a pack that is not there yet. The previous pack stays for apps that read the
+ * old pointer just before the upload. Apps only move to newer versions, so a rollback is
+ * the previous content packed again as a new version.
  */
 export async function publish(log = console.log) {
   const dir = join(DIST, MODE, LANG);

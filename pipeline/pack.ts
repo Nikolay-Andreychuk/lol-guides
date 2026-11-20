@@ -1,10 +1,10 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { CACHE, DDRAGON_BASE, DIST, LANG, LOCALE, MODE, PACK_SCHEMA, ROOT, compareVersions, patchLabel } from "./config";
 import { applyChanges } from "./apply";
 import { eligibleItems, loadMode, modeSpells, plain } from "./catalog";
 import { listGuides, loadDictionary, writeJsonAtomic } from "./content";
-import { cachedVersions, currentVersion, ddragonDir, ensureIcon, fetchOk, loadData, type DDData, type DDItem } from "./ddragon";
+import { cachedVersions, currentVersion, ddragonDir, ensureIcon, fetchOk, loadData, pool, type DDData, type DDItem } from "./ddragon";
 import type { Guide, Slot, SituationDef } from "./types";
 import { validateGuide } from "./validate";
 
@@ -71,8 +71,11 @@ export function resolveBuilds(g: Guide, dict: SituationDef[]): PackBuild[] {
 async function toWebp(png: string, webp: string) {
   if (existsSync(webp)) return;
   mkdirSync(dirname(webp), { recursive: true });
-  const p = Bun.spawn(["cwebp", "-quiet", "-q", "82", png, "-o", webp], { stdout: "ignore", stderr: "pipe" });
+  // Converted under a temp name: an interrupted cwebp must not leave a file the check above accepts.
+  const tmp = `${webp}.tmp`;
+  const p = Bun.spawn(["cwebp", "-quiet", "-q", "82", png, "-o", tmp], { stdout: "ignore", stderr: "pipe" });
   if ((await p.exited) !== 0) throw new Error(`cwebp ${png}: ${await new Response(p.stderr).text()}`);
+  renameSync(tmp, webp);
 }
 
 /** Item data for an id the current patch dropped: newest cached version that has it, else the guide's own version. */
@@ -200,20 +203,13 @@ export async function pack(log = console.log) {
 
   log(`Иконки: ${icons.size}, конвертирую в WebP…`);
   const webpCache = join(CACHE, "webp");
-  const entries = [...icons.entries()];
-  let next = 0;
-  await Promise.all(
-    Array.from({ length: 8 }, async () => {
-      while (next < entries.length) {
-        const [packPath, png] = entries[next++];
-        const rel = png.slice(join(CACHE, "ddragon").length + 1).replace(/\.png$/, ".webp");
-        const cached = join(webpCache, rel);
-        await toWebp(png, cached);
-        mkdirSync(dirname(join(staging, "icons", packPath)), { recursive: true });
-        copyFileSync(cached, join(staging, "icons", packPath));
-      }
-    }),
-  );
+  await pool([...icons.entries()], 8, async ([packPath, png]) => {
+    const rel = png.slice(join(CACHE, "ddragon").length + 1).replace(/\.png$/, ".webp");
+    const cached = join(webpCache, rel);
+    await toWebp(png, cached);
+    mkdirSync(dirname(join(staging, "icons", packPath)), { recursive: true });
+    copyFileSync(cached, join(staging, "icons", packPath));
+  });
   writeFileSync(join(staging, "pack.json"), JSON.stringify(packJson));
 
   const outDir = join(DIST, MODE, LANG);

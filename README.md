@@ -31,7 +31,7 @@ bun pipeline patch
 bun pipeline pack
 cd app && ./gradlew assembleDebug
 ```
-`pack` кладёт свежий пакет гайдов в `app/app/src/main/assets/pack.zip`: без него сборка не начнётся. Новые гайды приложение скачивает из релиза `content` этого репозитория, туда их выкладывает `bun pipeline publish`. Адрес задаёт `contentBaseUrl` в `app/gradle.properties`; пустое значение отключает обновления.
+`pack` кладёт свежий пакет гайдов в `app/app/src/main/assets/pack.zip`: без него сборка не начнётся. Новые гайды приложение скачивает из релиза `content` этого репозитория, туда их выкладывает `bun pipeline publish`. Адрес задаёт `contentBaseUrl` в `app/gradle.properties`; пустое значение отключает обновления. Адрес вшит в каждую сборку: если сделать репозиторий приватным, переименовать релиз `content` или перенести пакеты, установленные приложения молча перестанут получать гайды.
 
 ## Тесты
 ```bash
