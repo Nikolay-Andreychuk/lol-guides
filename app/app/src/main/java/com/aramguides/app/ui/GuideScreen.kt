@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -248,7 +249,7 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
     Row(
         Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .heightIn(min = 64.dp)
             .padding(end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -257,7 +258,8 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(champ.name, color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, maxLines = 1)
+            // Two lines: at 360 dp with large fonts the patch chip leaves room for only part of «Поддержка · Стрелок».
+            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, maxLines = 2)
         }
         val stale = guide.patch != pack.data.patch
         Text(

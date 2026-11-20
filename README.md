@@ -45,8 +45,8 @@ aramReleasePassword=<пароль>
 
 Выпуск версии N:
 1. В `app/app/build.gradle.kts` поднимите `versionCode` и `versionName` до N.
-2. Соберите пакет и APK: `bun pipeline pack && bun pipeline publish && (cd app && ./gradlew assembleRelease)`.
-3. Опубликуйте: `cp app/app/build/outputs/apk/release/app-release.apk dist/aram-guides-vN.apk && gh release create app-vN dist/aram-guides-vN.apk --title "Приложение, версия N"`.
+2. Соберите пакет и APK: `bun pipeline pack && (cd app && ./gradlew assembleRelease)`.
+3. Опубликуйте APK, затем пакет: `cp app/app/build/outputs/apk/release/app-release.apk dist/aram-guides-vN.apk && gh release create app-vN dist/aram-guides-vN.apk --title "Приложение, версия N" && bun pipeline publish`. Пакет идёт вторым: если в нём поднята схема, старые приложения сразу покажут «Есть новая версия приложения», и ссылка должна вести уже на новый APK.
 
 Строка «Есть новая версия приложения» открывает последний релиз репозитория. Релиз `content` создан с `--latest=false`, поэтому последним всегда остаётся свежий `app-vN`.
 
