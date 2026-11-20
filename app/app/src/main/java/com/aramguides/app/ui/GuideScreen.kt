@@ -26,6 +26,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,6 +64,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aramguides.app.pack.Champion
@@ -257,7 +260,14 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
         PackIcon(pack, champ.icon, Modifier.size(40.dp), CircleShape)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(champ.name, color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            // Shrinks instead of clipping: at 360 dp and font scale 1.3 «Хеймердингер» and «Мисс Фортуна» do not fit at 18 sp.
+            BasicText(
+                champ.name,
+                style = TextStyle(color = Palette.on, fontWeight = FontWeight.SemiBold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 18.sp, stepSize = 0.5.sp),
+            )
             // Two lines: at 360 dp with large fonts the patch chip leaves room for only part of «Поддержка · Стрелок».
             Text(champ.roles, color = Palette.muted, fontSize = 12.sp, maxLines = 2)
         }

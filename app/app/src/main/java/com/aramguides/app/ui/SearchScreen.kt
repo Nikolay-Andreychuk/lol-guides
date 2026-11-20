@@ -218,12 +218,13 @@ private fun Tile(pack: LoadedPack, c: Champion, highlight: String, first: Boolea
         val ring = if (first) Modifier.border(2.dp, Palette.primary, RoundedCornerShape(17.dp)).padding(4.dp) else Modifier.padding(4.dp)
         PackIcon(pack, c.icon, ring.size(64.dp), shape, grey = !hasGuide)
         // A one-word name shrinks to fit its line instead of breaking mid-word («Хеймердинг / ер»).
+        // The 7 sp floor is reached only with large fonts: at scale 1.3 a 411 dp phone's five columns need about 8 sp.
         BasicText(
             highlighted(c.name, highlight),
             style = TextStyle(color = if (hasGuide) Palette.on else Palette.faint, lineHeight = 15.sp, textAlign = TextAlign.Center),
             maxLines = if (' ' in c.name) 2 else 1,
             overflow = TextOverflow.Ellipsis,
-            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 12.sp, stepSize = 0.5.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 7.sp, maxFontSize = 12.sp, stepSize = 0.5.sp),
             modifier = Modifier.padding(horizontal = 2.dp),
         )
     }
