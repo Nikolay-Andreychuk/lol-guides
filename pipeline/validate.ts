@@ -8,6 +8,9 @@ export interface Report {
   warnings: string[];
 }
 
+/** Longest situation hint: the app keeps two lines for it under the chips on a 360 dp screen. */
+export const SIT_WHEN_MAX = 90;
+
 const LIMITS = {
   combo: [2, 4, 200],
   ability: [20, 700],
@@ -16,7 +19,7 @@ const LIMITS = {
   tipPoint: [20, 350],
   note: 200,
   sitName: [2, 30],
-  sitWhen: [5, 160],
+  sitWhen: [5, SIT_WHEN_MAX],
   situations: 8,
   changes: 4,
   sources: [1, 25],
@@ -167,6 +170,15 @@ export function validateGuide(
           texts.push([`tips.${k}.points[${i + 1}]`, p]);
         });
     }
+  // A `versus` point names the enemy composition the way the chips do, so the two screens agree.
+  const sitNames = new Set(dictionary.map((d) => d.name));
+  if (Array.isArray(g.situations)) for (const s of g.situations) if (isObj(s) && typeof s.name === "string") sitNames.add(s.name.trim());
+  const versus = isObj(g.tips) && isObj(g.tips.versus) && Array.isArray(g.tips.versus.points) ? g.tips.versus.points : [];
+  versus.forEach((p, i) => {
+    const head = typeof p === "string" ? p.split(":")[0].trim() : "";
+    if (sitNames.size && !sitNames.has(head))
+      warnings.push(`tips.versus.points[${i + 1}]: «${head.slice(0, 40)}» — не название ситуации; начни пункт с названия из словаря и двоеточия`);
+  });
   if (isObj(sk) && typeof sk.note === "string") texts.push(["skills.note", sk.note]);
   if (Array.isArray(g.situations))
     for (const [n, s] of g.situations.entries())
@@ -184,7 +196,7 @@ export function validateGuide(
     for (const m of t.matchAll(/\{([^}]*)\}/g)) if (!(ABILITY_KEYS as readonly string[]).includes(m[1])) err(`${where}: токен {${m[1]}} — допустимы {P} {Q} {W} {E} {R}`);
     // JS \b is ASCII-only, so word edges for Cyrillic are spelled out.
     if (/(?<![а-яё])рун(а|ы|у|е|ой|ам|ами|ах)?(?![а-яё])/iu.test(t)) err(`${where}: руны не упоминаются`);
-    for (const w of nearMisses(t, names, familiar)) warnings.push(`${where}: «${w.word}» похоже на «${w.name}» — проверьте написание`);
+    for (const w of nearMisses(t, names, familiar)) warnings.push(`${where}: «${w.word}» похоже на «${w.name}» — проверь написание; если это обычное слово, оставь как есть`);
   }
 
   // Sources

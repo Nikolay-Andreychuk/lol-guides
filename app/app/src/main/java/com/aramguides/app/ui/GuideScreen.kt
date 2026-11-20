@@ -23,11 +23,12 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -59,6 +60,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aramguides.app.pack.Champion
@@ -171,7 +173,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
 
     sheetAbility?.let { key ->
         ModalBottomSheet(onDismissRequest = { sheetAbility = null }, containerColor = Palette.s1) {
-            Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true)
                     Spacer(Modifier.width(12.dp))
@@ -188,7 +190,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     sheetItem?.let { id ->
         val item = pack.data.items[id.toString()]
         ModalBottomSheet(onDismissRequest = { sheetItem = null }, containerColor = Palette.s1) {
-            Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     PackIcon(pack, item?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp))
                     Spacer(Modifier.width(12.dp))
@@ -320,23 +322,30 @@ private fun BuyTab(pack: LoadedPack, guide: Guide, onItem: (Int) -> Unit) {
                         selected = on,
                         onClick = { sel = b.key },
                         label = { Text(b.name) },
-                        leadingIcon = if (on) {
-                            { Icon(Icons.Filled.Check, contentDescription = null, Modifier.size(18.dp)) }
-                        } else null,
+                        // No check icon: a chip that widens when selected reflows the rows under the finger.
                         shape = RoundedCornerShape(8.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             containerColor = Palette.bg,
                             labelColor = Palette.body,
                             selectedContainerColor = Palette.pcont,
                             selectedLabelColor = Palette.onPcont,
-                            selectedLeadingIconColor = Palette.onPcont,
                         ),
                     )
                 }
             }
         }
         item {
-            Text(build.`when`, color = Palette.muted, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            // A fixed two-line height keeps the build list in place while chips are compared.
+            Text(
+                build.`when`,
+                color = Palette.muted,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
         }
         item {
             Text("СБОРКА", color = Palette.faint, fontSize = 11.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp))

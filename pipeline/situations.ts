@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { ROOT } from "./config";
 import { dictionaryPath, listGuides, loadDictionary, saveGuide, writeJsonAtomic } from "./content";
 import { LimitReached, runAgent } from "./generate";
+import { SIT_WHEN_MAX } from "./validate";
 import type { GuideSituation, SituationDef } from "./types";
 
 const str = { type: "string" } as const;
@@ -68,7 +69,7 @@ export async function situations(log = console.log) {
       .map(([name, e]) => `${name} — ${e.champions.size} — ${[...e.whens].slice(0, 4).join(" | ")}`),
     "",
     "## Что вернуть",
-    "dictionary: все записи текущего словаря без изменений плюс новые записи для названий, которым в словаре нет пары. Синонимы и близкие составы сведи в одну запись. Для новой записи: key — латиница, строчные буквы, цифры и дефис, до 24 символов (heal, tanks, burst-ad); name — по правилам выше; when — одна строка до 160 символов: когда выбирать, обобщи описания из гайдов, можно назвать 2–4 типичных чемпиона.",
+    `dictionary: все записи текущего словаря без изменений плюс новые записи для названий, которым в словаре нет пары. Синонимы и близкие составы сведи в одну запись. Для новой записи: key — латиница, строчные буквы, цифры и дефис, до 24 символов (heal, tanks, burst-ad); name — по правилам выше; when — до ${SIT_WHEN_MAX} символов: когда выбирать, обобщи описания из гайдов, можно назвать 2–4 типичных чемпиона.`,
     "mapping: для каждого названия из списка выше — key записи, к которой оно относится.",
   ].join("\n");
 
@@ -81,7 +82,7 @@ export async function situations(log = console.log) {
   const fresh = body.dictionary.filter((d) => !known.has(d.key));
   for (const d of fresh) {
     if (!/^[a-z][a-z0-9-]{1,23}$/.test(d.key)) throw new Error(`Плохой key «${d.key}»`);
-    if (!d.name.trim() || d.name.length > 30 || !d.when.trim() || d.when.length > 160) throw new Error(`Плохая запись словаря «${d.key}»`);
+    if (!d.name.trim() || d.name.length > 30 || !d.when.trim() || d.when.length > SIT_WHEN_MAX) throw new Error(`Плохая запись словаря «${d.key}»`);
   }
   const map = new Map(body.mapping.map((m) => [m.name.trim(), m.key]));
   const allKeys = new Set([...known, ...fresh.map((d) => d.key)]);
@@ -96,6 +97,9 @@ export async function situations(log = console.log) {
   fresh.sort((a, b) => (uses.get(b.key) ?? 0) - (uses.get(a.key) ?? 0));
   const next = [...dict, ...fresh.filter((d) => uses.has(d.key)).map(({ key, name, when }) => ({ key, name: name.trim(), when: when.trim() }))];
 
+  // The dictionary only grows, so writing it first leaves no guide pointing at a missing key if
+  // the run stops while guides are rewritten; a rerun then finishes the rewrite.
+  writeJsonAtomic(dictionaryPath(), next);
   for (const g of guides) {
     if (!g.situations.some((s) => "name" in s)) continue;
     const seen = new Set<string>();
@@ -111,7 +115,6 @@ export async function situations(log = console.log) {
     }
     saveGuide({ ...g, situations: out });
   }
-  writeJsonAtomic(dictionaryPath(), next);
   log(`Словарь: ${next.length} записей (новых ${next.length - dict.length}).`);
   for (const d of next.slice(dict.length)) log(`  ${d.key} — ${d.name} (${uses.get(d.key)} гайд.)`);
   return { added: next.length - dict.length };
