@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.AramGuides" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF121317</item>
+        <item name="android:statusBarColor">#FF121317</item>
+        <item name="android:navigationBarColor">#FF121317</item>
+    </style>
+</resources>

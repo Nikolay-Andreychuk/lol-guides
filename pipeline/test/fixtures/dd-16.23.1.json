@@ -1,0 +1,1549 @@
+{
+ "version": "16.23.1",
+ "champions": {
+  "Ahri": {
+   "id": "Ahri",
+   "key": "103",
+   "name": "Ари",
+   "title": "Девятихвостая лиса",
+   "image": {
+    "full": "Ahri.png",
+    "sprite": "champion0.png",
+    "group": "champion",
+    "x": 48,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "tags": [
+    "Mage",
+    "Assassin"
+   ],
+   "spells": [
+    {
+     "id": "AhriQ",
+     "name": "Сфера обмана",
+     "description": "Ари запускает сферу, которая наносит магический урон всем врагам на своем пути, пока летит от Ари, и чистый урон по пути назад. ",
+     "image": {
+      "full": "AhriQ.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 384,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AhriW",
+     "name": "Лисий огонь",
+     "description": "Ари ненадолго ускоряется и выпускает три огонька, которые нацеливаются на ближайших врагов и атакуют их.",
+     "image": {
+      "full": "AhriW.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 432,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AhriE",
+     "name": "Очарование",
+     "description": "Ари посылает воздушный поцелуй, который наносит магический урон и очаровывает врага, мгновенно останавливая умения перемещения и заставляя его завороженно идти по направлению к ней.",
+     "image": {
+      "full": "AhriE.png",
+      "sprite": "spell1.png",
+      "group": "spell",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AhriR",
+     "name": "Призрачный рывок",
+     "description": "Ари совершает рывок вперед и стреляет молниями душ, нанося урон врагам поблизости. Призрачный рывок можно использовать до 3 раз до перезарядки умения. Количество применений увеличивается, когда Ари участвует в убийстве вражеских чемпионов.",
+     "image": {
+      "full": "AhriR.png",
+      "sprite": "spell1.png",
+      "group": "spell",
+      "x": 48,
+      "y": 0,
+      "w": 48,
+      "h": 48
+     }
+    }
+   ],
+   "passive": {
+    "name": "Похищение сущности",
+    "description": "Ари лечится, когда убивает 9 миньонов или монстров.<br>Поучаствовав в убийстве чемпиона, она восстанавливает себе еще больше здоровья.",
+    "image": {
+     "full": "Ahri_SoulEater2.png",
+     "sprite": "passive0.png",
+     "group": "passive",
+     "x": 48,
+     "y": 0,
+     "w": 48,
+     "h": 48
+    }
+   }
+  },
+  "Aatrox": {
+   "id": "Aatrox",
+   "key": "266",
+   "name": "Атрокс",
+   "title": "Клинок даркинов",
+   "image": {
+    "full": "Aatrox.png",
+    "sprite": "champion0.png",
+    "group": "champion",
+    "x": 0,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "tags": [
+    "Fighter"
+   ],
+   "spells": [
+    {
+     "id": "AatroxQ",
+     "name": "Клинок даркинов",
+     "description": "Атрокс бьет мечом сверху вниз, нанося физический урон. Он может ударить три раза, и каждый раз область поражения будет меняться.",
+     "image": {
+      "full": "AatroxQ.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 192,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AatroxW",
+     "name": "Проклятые цепи",
+     "description": "Атрокс бьет по земле, нанося урон первому пораженному врагу. Если чемпионы или большие монстры не покинут область действия, то будут притянуты к ее центру и снова получат урон.",
+     "image": {
+      "full": "AatroxW.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 240,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AatroxE",
+     "name": "Темный рывок",
+     "description": "Атрокс пассивно восстанавливает себе здоровье при нанесении урона вражеским чемпионам. При активации он совершает рывок в выбранном направлении.",
+     "image": {
+      "full": "AatroxE.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 288,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "AatroxR",
+     "name": "Губитель мира",
+     "description": "Атрокс принимает демоническую форму, пугая ближайших вражеских миньонов, а также увеличивая свою силу атаки, принимаемое лечение и скорость передвижения. Если он зарабатывает убийство или содействие, продолжительность эффекта увеличивается.",
+     "image": {
+      "full": "AatroxR.png",
+      "sprite": "spell0.png",
+      "group": "spell",
+      "x": 336,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    }
+   ],
+   "passive": {
+    "name": "Стойка разрушителя",
+    "description": "Периодически следующая автоатака Атрокса дополнительно наносит <magicDamage>магический урон</magicDamage> в зависимости от максимального запаса здоровья цели и лечит его. ",
+    "image": {
+     "full": "Aatrox_Passive.png",
+     "sprite": "passive0.png",
+     "group": "passive",
+     "x": 0,
+     "y": 0,
+     "w": 48,
+     "h": 48
+    }
+   }
+  },
+  "Soraka": {
+   "id": "Soraka",
+   "key": "16",
+   "name": "Сорака",
+   "title": "Звездное дитя",
+   "image": {
+    "full": "Soraka.png",
+    "sprite": "champion4.png",
+    "group": "champion",
+    "x": 432,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "tags": [
+    "Support",
+    "Mage"
+   ],
+   "spells": [
+    {
+     "id": "SorakaQ",
+     "name": "Звездопад",
+     "description": "По призыву Сораки с неба в указанную область падает звезда, нанося магический урон всем врагам в зоне поражения и замедляя их. Если умение поражает вражеского чемпиона, Сорака восстанавливает себе здоровье.",
+     "image": {
+      "full": "SorakaQ.png",
+      "sprite": "spell13.png",
+      "group": "spell",
+      "x": 0,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "SorakaW",
+     "name": "Звездная пыль",
+     "description": "Сорака жертвует частью своего запаса здоровья, восстанавливая здоровье другому союзному чемпиону.",
+     "image": {
+      "full": "SorakaW.png",
+      "sprite": "spell13.png",
+      "group": "spell",
+      "x": 48,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "SorakaE",
+     "name": "Равноденствие",
+     "description": "Сорака создает в указанной области зону молчания. Враги, не успевшие покинуть ее до окончания времени ее действия, дополнительно обездвиживаются.",
+     "image": {
+      "full": "SorakaE.png",
+      "sprite": "spell13.png",
+      "group": "spell",
+      "x": 96,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "SorakaR",
+     "name": "Желание",
+     "description": "Сорака наполняет сердца всех союзных чемпионов надеждой, восстанавливая себе и им здоровье.",
+     "image": {
+      "full": "SorakaR.png",
+      "sprite": "spell13.png",
+      "group": "spell",
+      "x": 144,
+      "y": 144,
+      "w": 48,
+      "h": 48
+     }
+    }
+   ],
+   "passive": {
+    "name": "Спасение",
+    "description": "Скорость передвижения Сораки увеличена при движении в сторону союзников, у которых осталось мало здоровья.",
+    "image": {
+     "full": "Soraka_Passive.png",
+     "sprite": "passive4.png",
+     "group": "passive",
+     "x": 432,
+     "y": 0,
+     "w": 48,
+     "h": 48
+    }
+   }
+  },
+  "MissFortune": {
+   "id": "MissFortune",
+   "key": "21",
+   "name": "Мисс Фортуна",
+   "title": "Охотница за головами",
+   "image": {
+    "full": "MissFortune.png",
+    "sprite": "champion2.png",
+    "group": "champion",
+    "x": 192,
+    "y": 96,
+    "w": 48,
+    "h": 48
+   },
+   "tags": [
+    "Marksman",
+    "Mage"
+   ],
+   "spells": [
+    {
+     "id": "MissFortuneRicochetShot",
+     "name": "Два по цене одного",
+     "description": "Мисс Фортуна стреляет в противника, нанося урон и ему, и цели за ним. Оба выстрела могут наложить эффект Приветственного выстрела.",
+     "image": {
+      "full": "MissFortuneRicochetShot.png",
+      "sprite": "spell9.png",
+      "group": "spell",
+      "x": 0,
+      "y": 48,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "MissFortuneViciousStrikes",
+     "name": "Походочка",
+     "description": "Скорость передвижения Мисс Фортуны пассивно увеличивается, когда ей не наносят урон. При активации умения скорость атаки Мисс Фортуны на короткое время увеличивается. Перезарядку Походочки можно уменьшить использованием Приветственного выстрела.",
+     "image": {
+      "full": "MissFortuneViciousStrikes.png",
+      "sprite": "spell9.png",
+      "group": "spell",
+      "x": 48,
+      "y": 48,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "MissFortuneScattershot",
+     "name": "Свинцовый дождь",
+     "description": "Мисс Фортуна обрушивает град пуль на выбранную область, раскрывая ее. Все находящиеся там противники в течение нескольких секунд получают урон и замедляются.",
+     "image": {
+      "full": "MissFortuneScattershot.png",
+      "sprite": "spell9.png",
+      "group": "spell",
+      "x": 96,
+      "y": 48,
+      "w": 48,
+      "h": 48
+     }
+    },
+    {
+     "id": "MissFortuneBulletTime",
+     "name": "Время умирать",
+     "description": "Мисс Фортуна выпускает шквал пуль веером перед собой, нанося гигантский урон врагам. Каждая волна может наносить критический урон.",
+     "image": {
+      "full": "MissFortuneBulletTime.png",
+      "sprite": "spell9.png",
+      "group": "spell",
+      "x": 144,
+      "y": 48,
+      "w": 48,
+      "h": 48
+     }
+    }
+   ],
+   "passive": {
+    "name": "Приветственный выстрел",
+    "description": "Автоатаки Мисс Фортуны наносят дополнительный физический урон каждый раз, когда она меняет цель.",
+    "image": {
+     "full": "MissFortune_W.png",
+     "sprite": "passive2.png",
+     "group": "passive",
+     "x": 192,
+     "y": 96,
+     "w": 48,
+     "h": 48
+    }
+   }
+  }
+ },
+ "championsEn": {
+  "Ahri": {
+   "id": "Ahri",
+   "name": "Ahri"
+  },
+  "Aatrox": {
+   "id": "Aatrox",
+   "name": "Aatrox"
+  },
+  "Soraka": {
+   "id": "Soraka",
+   "name": "Soraka"
+  },
+  "MissFortune": {
+   "id": "MissFortune",
+   "name": "Miss Fortune"
+  }
+ },
+ "items": {
+  "3802": {
+   "name": "Потерянная глава",
+   "description": "<mainText><stats><attention>40</attention> силы умений<br><attention>300</attention> маны<br><attention>10</attention> ускорения умений</stats><br><br><passive>Просвещение</passive><br>При повышении уровня вы восстанавливаете <scaleMana>20% от максимального запаса маны</scaleMana> в течение 3 сек.</mainText>",
+   "colloq": ";Lost Chapter",
+   "plaintext": "Восстанавливает ману при получении нового уровня.",
+   "from": [
+    "1052",
+    "1027",
+    "2022"
+   ],
+   "into": [
+    "2522",
+    "323003",
+    "6656",
+    "3003",
+    "6655",
+    "2503",
+    "3118",
+    "4644"
+   ],
+   "image": {
+    "full": "3802.png",
+    "sprite": "item4.png",
+    "group": "item",
+    "x": 96,
+    "y": 336,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 250,
+    "purchasable": true,
+    "total": 1200,
+    "sell": 840
+   },
+   "tags": [
+    "SpellDamage",
+    "Mana",
+    "ManaRegen",
+    "CooldownReduction",
+    "AbilityHaste"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMPPoolMod": 300,
+    "FlatMagicDamageMod": 40
+   },
+   "depth": 2
+  },
+  "2003": {
+   "name": "Зелье здоровья",
+   "description": "<mainText><stats></stats><br><br><active>Поглощение</active><br>Восстанавливает <healing>120 здоровья</healing> в течение 15 сек.</mainText>",
+   "colloq": ";Health Potion",
+   "plaintext": "В течение некоторого времени восстанавливает здоровье",
+   "stacks": 5,
+   "consumed": true,
+   "image": {
+    "full": "2003.png",
+    "sprite": "item0.png",
+    "group": "item",
+    "x": 288,
+    "y": 384,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 50,
+    "purchasable": true,
+    "total": 50,
+    "sell": 20
+   },
+   "tags": [
+    "HealthRegen",
+    "Consumable",
+    "Lane",
+    "Jungle"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {}
+  },
+  "6655": {
+   "name": "Эхо Людена",
+   "description": "<mainText><stats><attention>100</attention> силы умений<br><attention>600</attention> маны<br><attention>10</attention> ускорения умений</stats><br><br><passive>Эхо</passive><br>При нанесении урона умениями вы выпускаете эха (6), которые дополнительно наносят <magicDamage>магический урон</magicDamage> цели и врагам поблизости. Оставшиеся эха выпускаются в основную цель, нанося 20% урона.<br></mainText>",
+   "colloq": "",
+   "plaintext": "Высокий взрывной урон. Хорошо подходит против хрупких врагов.",
+   "from": [
+    "3802",
+    "3145"
+   ],
+   "image": {
+    "full": "6655.png",
+    "sprite": "item6.png",
+    "group": "item",
+    "x": 144,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 450,
+    "purchasable": true,
+    "total": 2750,
+    "sell": 1925
+   },
+   "tags": [
+    "SpellDamage",
+    "Mana",
+    "CooldownReduction",
+    "AbilityHaste"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMPPoolMod": 600,
+    "FlatMagicDamageMod": 100
+   },
+   "depth": 3
+  },
+  "3020": {
+   "name": "Сапоги чародея",
+   "description": "<mainText><stats><attention>12</attention> магического пробивания<br><attention>45</attention> скорости передвижения</stats><br><br></mainText>",
+   "colloq": ";Sorcerer's Shoes",
+   "plaintext": "Увеличивают скорость передвижения и магический урон",
+   "from": [
+    "1001"
+   ],
+   "into": [
+    "3175"
+   ],
+   "image": {
+    "full": "3020.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 336,
+    "y": 96,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 800,
+    "purchasable": true,
+    "total": 1100,
+    "sell": 770
+   },
+   "tags": [
+    "Boots",
+    "MagicPenetration"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMovementSpeedMod": 45
+   },
+   "depth": 2
+  },
+  "4645": {
+   "name": "Сумрачное пламя",
+   "description": "<mainText><stats><attention>110</attention> силы умений<br><attention>15</attention> магического пробивания</stats><br><br><passive>Огненный цветок</passive><br><magicDamage>Маг.</magicDamage> и <trueDamage>чистый урон</trueDamage>, наносимый врагам со здоровьем ниже 40%, становится <attention>критическим</attention>, повышаясь на 20%. </mainText>",
+   "colloq": "",
+   "plaintext": "",
+   "from": [
+    "3145",
+    "1058"
+   ],
+   "image": {
+    "full": "4645.png",
+    "sprite": "item5.png",
+    "group": "item",
+    "x": 240,
+    "y": 336,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 900,
+    "purchasable": true,
+    "total": 3200,
+    "sell": 2240
+   },
+   "tags": [
+    "SpellDamage",
+    "MagicPenetration"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMagicDamageMod": 110
+   },
+   "depth": 3
+  },
+  "3089": {
+   "name": "Смертельная шляпа Рабадона",
+   "description": "<mainText><stats><attention>130</attention> силы умений</stats><br><br><passive>Магический опус</passive><br>Увеличивает вашу общую <scaleAP>силу умений на 30%</scaleAP>.</mainText>",
+   "colloq": ";dc;banksys;hat;rabadons deathcap",
+   "plaintext": "Значительно увеличивает силу умений",
+   "from": [
+    "1058",
+    "1058"
+   ],
+   "image": {
+    "full": "3089.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 288,
+    "y": 288,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 1100,
+    "purchasable": true,
+    "total": 3500,
+    "sell": 2450
+   },
+   "tags": [
+    "SpellDamage"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMagicDamageMod": 130
+   },
+   "depth": 2
+  },
+  "3135": {
+   "name": "Посох Бездны",
+   "description": "<mainText><stats><attention>95</attention> силы умений<br><attention>40%</attention> магического пробивания</stats><br><br></mainText>",
+   "colloq": ";Void Staff",
+   "plaintext": "Увеличивает магический урон",
+   "from": [
+    "4630",
+    "1026"
+   ],
+   "image": {
+    "full": "3135.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 144,
+    "y": 432,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 1050,
+    "purchasable": true,
+    "total": 3000,
+    "sell": 2100
+   },
+   "tags": [
+    "MagicPenetration",
+    "SpellDamage"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMagicDamageMod": 95
+   },
+   "depth": 3
+  },
+  "3157": {
+   "name": "Песочные часы Жони",
+   "description": "<mainText><stats><attention>105</attention> силы умений<br><attention>50</attention> брони</stats><br><br><br><br><active>Остановка времени</active><br>Вы впадаете в <keyword>стазис</keyword> на 2.5 сек.</mainText>",
+   "colloq": ";zhg;zonyas;Zhonya's Hourglass",
+   "plaintext": "При активации чемпион становится неуязвимым, но теряет способность что-либо делать",
+   "from": [
+    "1058",
+    "2420"
+   ],
+   "image": {
+    "full": "3157.png",
+    "sprite": "item4.png",
+    "group": "item",
+    "x": 336,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 450,
+    "purchasable": true,
+    "total": 3250,
+    "sell": 2275
+   },
+   "tags": [
+    "Armor",
+    "SpellDamage",
+    "Active"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMagicDamageMod": 105,
+    "FlatArmorMod": 50
+   },
+   "effect": {
+    "Effect1Amount": "0",
+    "Effect2Amount": "2.5",
+    "Effect3Amount": "120"
+   },
+   "depth": 3
+  },
+  "3165": {
+   "name": "Мореллономикон",
+   "description": "<mainText><stats><attention>75</attention> силы умений<br><attention>350</attention> здоровья<br><attention>15</attention> ускорения умений</stats><br><br><passive>Страшные раны</passive><br>При нанесении <magicDamage>магического урона</magicDamage> чемпионам накладывает на них <keyword>Раны (40%)</keyword> на 3 сек.</mainText>",
+   "colloq": ";Morellonomicon;nmst;grievous;страшные",
+   "plaintext": "Увеличивает магический урон",
+   "from": [
+    "3916",
+    "1026",
+    "3067"
+   ],
+   "image": {
+    "full": "3165.png",
+    "sprite": "item4.png",
+    "group": "item",
+    "x": 0,
+    "y": 48,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 400,
+    "purchasable": true,
+    "total": 2850,
+    "sell": 1995
+   },
+   "tags": [
+    "Health",
+    "SpellDamage",
+    "CooldownReduction",
+    "AbilityHaste"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatHPPoolMod": 350,
+    "FlatMagicDamageMod": 75
+   },
+   "depth": 3
+  },
+  "3047": {
+   "name": "Бронированные сапоги",
+   "description": "<mainText><stats><attention>25</attention> брони<br><attention>45</attention> скорости передвижения</stats><br><br><passive>Бронирование</passive><br>Уменьшает получаемый от автоатак урон на 10%.</mainText>",
+   "colloq": ";Ninja Tabi;Plated Steelcaps",
+   "plaintext": "Увеличивают скорость передвижения и уменьшают входящий урон от автоатак",
+   "from": [
+    "1001",
+    "1029"
+   ],
+   "into": [
+    "3174"
+   ],
+   "image": {
+    "full": "3047.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 96,
+    "y": 192,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 600,
+    "purchasable": true,
+    "total": 1200,
+    "sell": 840
+   },
+   "tags": [
+    "Armor",
+    "Boots"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMovementSpeedMod": 45,
+    "FlatArmorMod": 25
+   },
+   "effect": {
+    "Effect1Amount": "0.1"
+   },
+   "depth": 2
+  },
+  "3111": {
+   "name": "Поступь Меркурия",
+   "description": "<mainText><stats><attention>20</attention> сопротивления магии<br><attention>45</attention> скорости передвижения<br><attention>30%</attention> стойкости</stats><br><br></mainText>",
+   "colloq": ";Mercury's Treads",
+   "plaintext": "Увеличивают скорость передвижения и сокращают длительность эффектов контроля",
+   "from": [
+    "1001",
+    "1033"
+   ],
+   "into": [
+    "3173"
+   ],
+   "image": {
+    "full": "3111.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 336,
+    "y": 336,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 550,
+    "purchasable": true,
+    "total": 1250,
+    "sell": 875
+   },
+   "tags": [
+    "Boots",
+    "SpellBlock",
+    "Tenacity"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatSpellBlockMod": 20,
+    "FlatMovementSpeedMod": 45
+   },
+   "depth": 2
+  },
+  "3102": {
+   "name": "Завеса банши",
+   "description": "<mainText><stats><attention>105</attention> силы умений<br><attention>40</attention> сопротивления магии</stats><br><br><passive>Отвод</passive><br>Накладывает щит от заклинаний, который блокирует следующее вражеское умение.</mainText>",
+   "colloq": ";bv;Banshee's Veil",
+   "plaintext": "Периодически блокирует вражеские умения",
+   "from": [
+    "1058",
+    "4632"
+   ],
+   "image": {
+    "full": "3102.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 48,
+    "y": 336,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 200,
+    "purchasable": true,
+    "total": 3000,
+    "sell": 2100
+   },
+   "tags": [
+    "SpellBlock",
+    "SpellDamage"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatSpellBlockMod": 40,
+    "FlatMagicDamageMod": 105
+   },
+   "effect": {
+    "Effect1Amount": "40",
+    "Effect2Amount": "45",
+    "Effect3Amount": "10",
+    "Effect4Amount": "-0.1",
+    "Effect5Amount": "8",
+    "Effect6Amount": "2"
+   },
+   "depth": 3
+  },
+  "6653": {
+   "name": "Мучения Лиандри",
+   "description": "<mainText><stats><attention>60</attention> силы умений<br><attention>300</attention> здоровья</stats><br><br><passive>Мучения</passive><br>При нанесении урона умениями вы поджигаете врагов, нанося им <magicDamage>магический урон в размере 2% от максимального запаса здоровья</magicDamage> в секунду в течение 3 сек.<br><br><passive>Страдания</passive><br>Каждую секунду в бою с вражескими чемпионами ваш урон увеличивается на 2% (максимальное увеличение – 6%).</mainText>",
+   "colloq": "",
+   "plaintext": "Позволяет ворваться в бой и нанести высокий периодический урон, который особенно велик против живучих врагов.",
+   "from": [
+    "3147",
+    "2508"
+   ],
+   "image": {
+    "full": "6653.png",
+    "sprite": "item6.png",
+    "group": "item",
+    "x": 96,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 800,
+    "purchasable": true,
+    "total": 3000,
+    "sell": 2100
+   },
+   "tags": [
+    "Health",
+    "SpellDamage"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatHPPoolMod": 300,
+    "FlatMagicDamageMod": 60
+   },
+   "depth": 3
+  },
+  "1001": {
+   "name": "Ботинки",
+   "description": "<mainText><stats><attention>25</attention> скорости передвижения</stats><br><br></mainText>",
+   "colloq": ";Boots of Speed",
+   "plaintext": "Слегка увеличивают скорость передвижения",
+   "into": [
+    "3005",
+    "3047",
+    "3008",
+    "3006",
+    "3009",
+    "3010",
+    "3020",
+    "3111",
+    "3117",
+    "3158"
+   ],
+   "image": {
+    "full": "1001.png",
+    "sprite": "item0.png",
+    "group": "item",
+    "x": 0,
+    "y": 0,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 300,
+    "purchasable": true,
+    "total": 300,
+    "sell": 210
+   },
+   "tags": [
+    "Boots"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {
+    "FlatMovementSpeedMod": 25
+   }
+  },
+  "3039": {
+   "name": "Расплата Атмы",
+   "description": "<mainText><stats><attention>700</attention> здоровья<br><attention>20%</attention> шанса критического удара<br><attention>10</attention> ускорения умений</stats><br><br><passive>Большие руки</passive><br>Дает 0-30% шанса критического удара – в зависимости от <scaleHealth>дополнительного здоровья</scaleHealth>.</mainText>",
+   "colloq": "",
+   "plaintext": "",
+   "from": [
+    "1011",
+    "1018",
+    "1011"
+   ],
+   "image": {
+    "full": "3039.png",
+    "sprite": "item3.png",
+    "group": "item",
+    "x": 288,
+    "y": 144,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 500,
+    "purchasable": true,
+    "total": 2900,
+    "sell": 2030
+   },
+   "tags": [
+    "Health",
+    "CriticalStrike"
+   ],
+   "maps": {
+    "11": false,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": false
+   },
+   "stats": {
+    "FlatHPPoolMod": 700,
+    "FlatCritChanceMod": 0.2
+   },
+   "depth": 3
+  },
+  "223084": {
+   "name": "Сердце стали",
+   "description": "<mainText><stats><attention>700</attention> здоровья</stats><br><br><passive>Колоссальное поглощение</passive> (0 сек.) для каждой цели<br>После подготовки вы совершаете мощную атаку против чемпиона поблизости. Эта атака наносит дополнительный физический урон и навсегда увеличивает ваш максимальный запас здоровья.<br><br><passive>Голиаф</passive><br>Вы увеличиваетесь в размерах в зависимости от общего запаса здоровья. </mainText>",
+   "colloq": "",
+   "plaintext": "",
+   "image": {
+    "full": "223084.png",
+    "sprite": "item1.png",
+    "group": "item",
+    "x": 48,
+    "y": 432,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 2500,
+    "purchasable": true,
+    "total": 2500,
+    "sell": 1250
+   },
+   "tags": [
+    "Health"
+   ],
+   "maps": {
+    "11": false,
+    "12": true,
+    "22": false,
+    "30": true,
+    "453": false
+   },
+   "stats": {
+    "FlatHPPoolMod": 700
+   }
+  },
+  "771001": {
+   "name": "Скороходы",
+   "description": "<mainText><stats></stats><br><br><danger>Не более 1.</danger><br><br><jadeUnique>Улучшенное передвижение:</jadeUnique> <speed>25 скорости передвижения</speed></mainText>",
+   "colloq": "",
+   "plaintext": "",
+   "into": [
+    "773020",
+    "773117",
+    "773111",
+    "773006",
+    "773009",
+    "773047",
+    "773158"
+   ],
+   "image": {
+    "full": "771001.png",
+    "sprite": "item6.png",
+    "group": "item",
+    "x": 288,
+    "y": 144,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 325,
+    "purchasable": true,
+    "total": 325,
+    "sell": 228
+   },
+   "tags": [
+    "Boots"
+   ],
+   "maps": {
+    "11": false,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {}
+  },
+  "2022": {
+   "name": "Светлячок",
+   "description": "<mainText><stats><attention>5</attention> ускорения умений</stats><br><br></mainText>",
+   "colloq": "",
+   "plaintext": "",
+   "into": [
+    "2020",
+    "3024",
+    "3133",
+    "3802",
+    "3067",
+    "3057",
+    "3108",
+    "3158",
+    "4642",
+    "6660"
+   ],
+   "image": {
+    "full": "2022.png",
+    "sprite": "item0.png",
+    "group": "item",
+    "x": 192,
+    "y": 432,
+    "w": 48,
+    "h": 48
+   },
+   "gold": {
+    "base": 250,
+    "purchasable": true,
+    "total": 250,
+    "sell": 175
+   },
+   "tags": [
+    "CooldownReduction"
+   ],
+   "maps": {
+    "11": true,
+    "12": true,
+    "22": false,
+    "30": false,
+    "453": true
+   },
+   "stats": {}
+  }
+ },
+ "summoners": {
+  "SummonerFlash": {
+   "id": "SummonerFlash",
+   "name": "Скачок",
+   "description": "Телепортирует вас на небольшое расстояние в направлении курсора.",
+   "tooltip": "Телепортирует вас на небольшое расстояние в направлении курсора.",
+   "maxrank": 1,
+   "cooldown": [
+    300
+   ],
+   "cooldownBurn": "300",
+   "cost": [
+    0
+   ],
+   "costBurn": "0",
+   "datavalues": {},
+   "effect": [
+    null,
+    [
+     400
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ],
+   "effectBurn": [
+    null,
+    "400",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "vars": [],
+   "key": "4",
+   "summonerLevel": 7,
+   "modes": [
+    "ARAM",
+    "TUTORIAL",
+    "KIWI",
+    "ULTBOOK",
+    "FIRSTBLOOD",
+    "SWIFTPLAY",
+    "CLASSIC",
+    "PRACTICETOOL",
+    "RUBY",
+    "RUBY_TRIAL_1",
+    "BRAWL",
+    "WIPMODEWIP4",
+    "URF",
+    "SNOWURF",
+    "KIWI_JADE",
+    "RUBY_TRIAL_3",
+    "ONEFORALL",
+    "ARSR",
+    "NEXUSBLITZ",
+    "DOOMBOTSTEEMO",
+    "RUBY_TRIAL_2"
+   ],
+   "costType": "Без стоимости",
+   "maxammo": "-1",
+   "range": [
+    425
+   ],
+   "rangeBurn": "425",
+   "image": {
+    "full": "SummonerFlash.png",
+    "sprite": "spell0.png",
+    "group": "spell",
+    "x": 96,
+    "y": 48,
+    "w": 48,
+    "h": 48
+   },
+   "resource": "Без стоимости"
+  },
+  "SummonerHeal": {
+   "id": "SummonerHeal",
+   "name": "Исцеление",
+   "description": "Вы и выбранный вами союзный чемпион восстанавливаете здоровье и получаете прибавку к скорости передвижения.",
+   "tooltip": "Восстанавливает вам и союзному чемпиону поблизости <healing>{{ totalheal }} здоровья</healing> и увеличивает <speed>скорость передвижения на {{ movespeed*100 }}%</speed> на {{ movespeedduration }} сек.<br /><br /><rules>Если вы не выбираете цель, заклинание лечит самого израненного союзного чемпиона в пределах радиуса действия.<br />Бойцам, недавно подвергавшимся Исцелению, восстанавливается в два раза меньше здоровья.</rules>",
+   "maxrank": 1,
+   "cooldown": [
+    240
+   ],
+   "cooldownBurn": "240",
+   "cost": [
+    0
+   ],
+   "costBurn": "0",
+   "datavalues": {},
+   "effect": [
+    null,
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ],
+   "effectBurn": [
+    null,
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "vars": [],
+   "key": "7",
+   "summonerLevel": 1,
+   "modes": [
+    "ARAM",
+    "TUTORIAL_MODULE_1",
+    "TUTORIAL",
+    "KIWI",
+    "ULTBOOK",
+    "SWIFTPLAY",
+    "CLASSIC",
+    "PRACTICETOOL",
+    "RUBY",
+    "RUBY_TRIAL_1",
+    "BRAWL",
+    "URF",
+    "KIWI_JADE",
+    "RUBY_TRIAL_3",
+    "TUTORIAL_MODULE_2",
+    "ONEFORALL",
+    "ASSASSINATE",
+    "ARSR",
+    "NEXUSBLITZ",
+    "DOOMBOTSTEEMO",
+    "RUBY_TRIAL_2"
+   ],
+   "costType": "Без стоимости",
+   "maxammo": "-1",
+   "range": [
+    875
+   ],
+   "rangeBurn": "875",
+   "image": {
+    "full": "SummonerHeal.png",
+    "sprite": "spell0.png",
+    "group": "spell",
+    "x": 336,
+    "y": 48,
+    "w": 48,
+    "h": 48
+   },
+   "resource": "Без стоимости"
+  },
+  "SummonerSmite": {
+   "id": "SummonerSmite",
+   "name": "Кара",
+   "description": "Наносит чистый урон монстру или миньону.",
+   "tooltip": "Наносит <trueDamage>{{ smitebasedamage }} чистого урона</trueDamage> выбранному большому монстру или миньону с линии.<br /><br />Наносит <trueDamage>{{ firstpvpdamage }} чистого урона</trueDamage> питомцам чемпионов.",
+   "maxrank": 1,
+   "cooldown": [
+    15
+   ],
+   "cooldownBurn": "15",
+   "cost": [
+    0
+   ],
+   "costBurn": "0",
+   "datavalues": {},
+   "effect": [
+    null,
+    [
+     15
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ],
+   "effectBurn": [
+    null,
+    "15",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "vars": [],
+   "key": "11",
+   "summonerLevel": 3,
+   "modes": [
+    "DOOMBOTSTEEMO",
+    "PRACTICETOOL",
+    "CLASSIC",
+    "SWIFTPLAY",
+    "URF",
+    "NEXUSBLITZ",
+    "ONEFORALL",
+    "TUTORIAL",
+    "ARSR"
+   ],
+   "costType": "Без стоимости",
+   "maxammo": "2",
+   "range": [
+    500
+   ],
+   "rangeBurn": "500",
+   "image": {
+    "full": "SummonerSmite.png",
+    "sprite": "spell0.png",
+    "group": "spell",
+    "x": 240,
+    "y": 96,
+    "w": 48,
+    "h": 48
+   },
+   "resource": "Без стоимости"
+  },
+  "SummonerSnowball": {
+   "id": "SummonerSnowball",
+   "name": "Метка",
+   "description": "Чемпион бросает снежок в указанном направлении. Попав во врага, он помечает его, дает истинное видение и позволяет совершить к нему рывок.",
+   "tooltip": "Чемпион бросает снежок на большое расстояние, нанося {{ tooltipdamagetotal }} чистого урона первому пораженному противнику и получая <span class=\"coloree91d7\">истинное видение</span> цели. Если снежок попадает во врага, в течение {{ e3 }} сек. заклинание можно активировать повторно, чтобы совершить к нему рывок, нанеся дополнительно {{ tooltipdamagetotal }} чистого урона. Рывок сокращает перезарядку Метки на {{ e4 }}%.<br /><br /><span class=\"colorFFFF00\">Снежки нельзя остановить при помощи щитов от заклинаний или барьеров против дальнобойных снарядов.</span>",
+   "maxrank": 1,
+   "cooldown": [
+    80
+   ],
+   "cooldownBurn": "80",
+   "cost": [
+    0
+   ],
+   "costBurn": "0",
+   "datavalues": {},
+   "effect": [
+    null,
+    [
+     10
+    ],
+    [
+     5
+    ],
+    [
+     3
+    ],
+    [
+     25
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ],
+   "effectBurn": [
+    null,
+    "10",
+    "5",
+    "3",
+    "25",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ],
+   "vars": [],
+   "key": "32",
+   "summonerLevel": 6,
+   "modes": [
+    "KIWI",
+    "KIWI_JADE",
+    "ARAM",
+    "FIRSTBLOOD"
+   ],
+   "costType": "Без стоимости",
+   "maxammo": "-1",
+   "range": [
+    1600
+   ],
+   "rangeBurn": "1600",
+   "image": {
+    "full": "SummonerSnowball.png",
+    "sprite": "spell0.png",
+    "group": "spell",
+    "x": 384,
+    "y": 96,
+    "w": 48,
+    "h": 48
+   },
+   "resource": "Без стоимости"
+  }
+ }
+}

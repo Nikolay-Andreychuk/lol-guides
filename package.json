@@ -1,0 +1,13 @@
+{
+  "name": "aram-guides",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pipeline": "bun pipeline/cli.ts",
+    "test": "bun test pipeline"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "typescript": "5"
+  }
+}

@@ -1,0 +1,18 @@
+.tmp/
+cache/
+dist/
+node_modules/
+.DS_Store
+
+# Android
+app/.gradle/
+app/build/
+app/app/build/
+app/local.properties
+app/.idea/
+app/.kotlin/
+*.iml
+*.keystore
+*.jks
+private/
+app/app/src/main/assets/pack.zip
