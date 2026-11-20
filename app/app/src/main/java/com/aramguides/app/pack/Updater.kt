@@ -46,8 +46,9 @@ class Updater(context: Context, private val store: PackStore, private val baseUr
             // A pack of another schema would fail the header check after the whole download.
             val usable = latest.schema == SUPPORTED_SCHEMA && latest.version > (store.activeVersion() ?: 0)
             val result = if (usable) download(latest) else UpdateResult.Nothing
-            // The ETag is remembered only after the pack it announces is in place.
-            prefs.edit().putString("etag", conn.getHeaderField("ETag")).apply()
+            // The ETag is remembered only after the pack it announces is in place, and only for this
+            // build's schema: a later build that reads another schema must not get 304 for this pointer.
+            if (latest.schema == SUPPORTED_SCHEMA) prefs.edit().putString("etag", conn.getHeaderField("ETag")).apply()
             return result
         } finally {
             conn.disconnect()
