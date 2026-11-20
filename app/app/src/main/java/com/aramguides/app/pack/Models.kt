@@ -3,7 +3,8 @@ package com.aramguides.app.pack
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-// Mirrors PackJson in pipeline/pack.ts. Bump SUPPORTED_SCHEMA together with PACK_SCHEMA there.
+// Declares only the pack fields the app reads (pipeline/pack.ts writes more). Bump SUPPORTED_SCHEMA
+// together with PACK_SCHEMA there when a field declared here is removed or changes type.
 const val SUPPORTED_SCHEMA = 1
 
 val packJson = Json { ignoreUnknownKeys = true }
@@ -12,9 +13,6 @@ val packJson = Json { ignoreUnknownKeys = true }
 data class Pack(
     val schema: Int,
     val version: Long,
-    val mode: String,
-    val lang: String,
-    val ddragon: String,
     val patch: String,
     val champions: List<Champion>,
     val items: Map<String, Item>,
@@ -27,7 +25,6 @@ data class Champion(
     val id: String,
     val name: String,
     val nameEn: String,
-    val title: String,
     val roles: String,
     val icon: String,
     val abilities: Map<String, Ability>? = null,
@@ -40,11 +37,10 @@ data class Ability(val name: String, val icon: String)
 data class Item(val name: String, val price: Int, val description: String, val icon: String, val removed: Boolean = false)
 
 @Serializable
-data class Spell(val name: String, val description: String, val icon: String)
+data class Spell(val icon: String)
 
 @Serializable
 data class Guide(
-    val ddragon: String,
     val patch: String,
     val spells: List<String>,
     val start: List<StartItem>,

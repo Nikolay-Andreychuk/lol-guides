@@ -10,9 +10,9 @@ const str = { type: "string" } as const;
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["dictionary", "mapping"],
+  required: ["added", "mapping"],
   properties: {
-    dictionary: {
+    added: {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["key", "name", "when"], properties: { key: str, name: str, when: str } },
     },
@@ -82,17 +82,18 @@ export async function situations(log = console.log) {
       .map(([name, e]) => `${name} — ${e.champions.size} — ${[...e.whens].slice(0, 4).join(" | ")}`),
     "",
     "## Что вернуть",
-    `dictionary: все записи текущего словаря без изменений плюс новые записи для названий, которым в словаре нет пары. Синонимы и близкие составы сведи в одну запись. Для новой записи: key — латиница, строчные буквы, цифры и дефис, до 24 символов (heal, tanks, burst-ad); name — по правилам выше; when — до ${SIT_WHEN_MAX} символов: когда выбирать, обобщи описания из гайдов, можно назвать 2–4 типичных чемпиона.`,
+    `added: только новые записи — для названий, которым в текущем словаре нет пары; существующие записи не повторяй. Синонимы и близкие составы сведи в одну запись. Для новой записи: key — латиница, строчные буквы, цифры и дефис, до 24 символов (heal, tanks, burst-ad); name — по правилам выше; when — до ${SIT_WHEN_MAX} символов: когда выбирать, обобщи описания из гайдов, можно назвать 2–4 типичных чемпиона.`,
     "mapping: для каждого названия из списка выше — key записи, к которой оно относится.",
   ].join("\n");
 
   const r = await runAgent(prompt, { schema: SCHEMA, web: false });
   if (r.limit) throw new LimitReached(r.error);
   if (r.error || !r.body) throw new Error(`Агент не свёл названия: ${r.error ?? "пустой ответ"}`);
-  const body = r.body as { dictionary: SituationDef[]; mapping: Array<{ name: string; key: string }> };
+  const body = r.body as { added: SituationDef[]; mapping: Array<{ name: string; key: string }> };
 
   const known = new Set(dict.map((d) => d.key));
-  const fresh = body.dictionary.filter((d) => !known.has(d.key));
+  // A known key sent back anyway is ignored, so existing entries never change.
+  const fresh = body.added.filter((d) => !known.has(d.key));
   for (const d of fresh) {
     if (!/^[a-z][a-z0-9-]{1,23}$/.test(d.key)) throw new Error(`Плохой key «${d.key}»`);
     if (!d.name.trim() || d.name.length > 30 || !d.when.trim() || d.when.length > SIT_WHEN_MAX) throw new Error(`Плохая запись словаря «${d.key}»`);

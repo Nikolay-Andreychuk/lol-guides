@@ -14,7 +14,7 @@ const BASE_SITUATION = { key: "base", name: "Обычно", when: "Если у �
 export const latestName = (mode = MODE, lang = LANG) => `latest-${mode}-${lang}.json`;
 export const BUNDLED_PACK = join(ROOT, "app/app/src/main/assets/pack.zip");
 
-// ---- pack.json shape (the app's contract; bump PACK_SCHEMA on breaking changes) ----
+// ---- pack.json shape. The app reads a subset (app/…/pack/Models.kt); bump PACK_SCHEMA when a field it declares is removed or changes type ----
 export interface PackBuild {
   key: string;
   name: string;

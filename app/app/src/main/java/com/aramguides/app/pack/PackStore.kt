@@ -51,7 +51,8 @@ class PackStore(private val context: Context) {
         }
     }
 
-    fun activeVersion(): Long? = activeFile()?.let { runCatching { readHeader(it).version }.getOrNull() }
+    /** Both writers name the file from a header this build decoded, so the name carries the version. */
+    fun activeVersion(): Long? = activeFile()?.name?.removePrefix("pack-")?.removeSuffix(".zip")?.toLongOrNull()
 
     fun open(): LoadedPack {
         val file = activeFile() ?: error("Нет активного пакета")
