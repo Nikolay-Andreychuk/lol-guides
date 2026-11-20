@@ -103,12 +103,13 @@ describe("validateGuide", () => {
 
 describe("versus names", () => {
   const d: SituationDef[] = [{ key: "tanks", name: "Много танков", when: "Три танка" }];
-  test("a point that opens with a dictionary name passes, a synonym is a warning", () => {
+  test("a dictionary name passes once; a synonym or a repeat is a warning", () => {
     const b = body();
     b.tips.versus.points = ["Много танков: бей по передней линии издалека.", "Много магов: бей по передней линии издалека.", "Много танков: держись за союзниками."];
     const w = check(b, d).warnings.filter((x) => x.startsWith("tips.versus"));
-    expect(w).toHaveLength(1);
+    expect(w).toHaveLength(2);
     expect(w[0]).toMatch(/points\[2\].*Много магов/);
+    expect(w[1]).toMatch(/points\[3\].*объедини/);
   });
 });
 

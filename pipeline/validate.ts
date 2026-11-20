@@ -174,10 +174,13 @@ export function validateGuide(
   const sitNames = new Set(dictionary.map((d) => d.name));
   if (Array.isArray(g.situations)) for (const s of g.situations) if (isObj(s) && typeof s.name === "string") sitNames.add(s.name.trim());
   const versus = isObj(g.tips) && isObj(g.tips.versus) && Array.isArray(g.tips.versus.points) ? g.tips.versus.points : [];
+  const heads = new Set<string>();
   versus.forEach((p, i) => {
     const head = typeof p === "string" ? p.split(":")[0].trim() : "";
     if (sitNames.size && !sitNames.has(head))
       warnings.push(`tips.versus.points[${i + 1}]: «${head.slice(0, 40)}» — не название ситуации; начни пункт с названия из словаря и двоеточия`);
+    else if (heads.has(head)) warnings.push(`tips.versus.points[${i + 1}]: «${head.slice(0, 40)}» уже есть выше; объедини пункты`);
+    heads.add(head);
   });
   if (isObj(sk) && typeof sk.note === "string") texts.push(["skills.note", sk.note]);
   if (Array.isArray(g.situations))
