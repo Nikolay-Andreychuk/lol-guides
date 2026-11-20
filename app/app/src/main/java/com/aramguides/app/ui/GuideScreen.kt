@@ -62,6 +62,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -269,7 +271,7 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
                 autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 18.sp, stepSize = 0.5.sp),
             )
             // Two lines: at 360 dp with large fonts the patch chip leaves room for only part of «Поддержка · Стрелок».
-            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, maxLines = 2)
+            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2)
         }
         val stale = guide.patch != pack.data.patch
         Text(
@@ -303,15 +305,17 @@ private fun Memo(
         ) {
             MemoGroup("Заклинания") {
                 guide.spells.forEach { id ->
-                    Box(Modifier.clickable { onSpell(id) }) {
-                        PackIcon(pack, pack.data.spells[id]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
+                    val spell = pack.data.spells[id]
+                    Box(Modifier.clickable { onSpell(id) }.semantics { contentDescription = spell?.name ?: id }) {
+                        PackIcon(pack, spell?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
                     }
                 }
             }
             MemoGroup("Старт") {
                 guide.start.forEach { s ->
-                    Box(Modifier.clickable { onItem(s.item) }) {
-                        PackIcon(pack, pack.data.items[s.item.toString()]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
+                    val item = pack.data.items[s.item.toString()]
+                    Box(Modifier.clickable { onItem(s.item) }.semantics { contentDescription = item?.name ?: s.item.toString() }) {
+                        PackIcon(pack, item?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
                         if (s.count > 1) {
                             Text(
                                 "×${s.count}",
