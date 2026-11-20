@@ -26,6 +26,13 @@ bun pipeline patch
 
 Если `sync` пишет про новые предметы карты режима — проверьте их и допишите в `itemReview` в `content/aram/mode.json`.
 
+## Приложение
+```bash
+bun pipeline pack
+cd app && ./gradlew assembleDebug
+```
+`pack` кладёт свежий пакет гайдов в `app/app/src/main/assets/pack.zip`: без него сборка не начнётся. Новые гайды приложение скачивает из релиза `content` этого репозитория, туда их выкладывает `bun pipeline publish`. Адрес задаёт `contentBaseUrl` в `app/gradle.properties`; пустое значение отключает обновления.
+
 ## Тесты
 ```bash
 bun test pipeline
