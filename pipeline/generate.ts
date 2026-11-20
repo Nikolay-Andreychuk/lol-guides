@@ -188,14 +188,15 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
     "-c", `tools.web_search=${opts.web}`,
     "-c", 'model_reasoning_effort="high"',
     "-c", "project_doc_max_bytes=0",
-    // Global AGENTS.md files can tell the model to fan out sub-agents; waiting on them ran guides past the timeout.
-    "-c", "features.multi_agent=false",
     "--skip-git-repo-check",
     "--json",
     "--output-schema", schemaFile,
     "-o", outFile,
   ];
-  const args = opts.resume ? [CODEX_BIN, "exec", "resume", ...flags, opts.resume, prompt] : [CODEX_BIN, "exec", ...flags, prompt];
+  // Sol models get sub-agent tools from the server whatever the feature flags say, and a global
+  // AGENTS.md may ask for them; runs that waited on sub-agents went past the timeout.
+  const input = `${prompt}\n\nРаботай сам: не запускай под-агентов.`;
+  const args = opts.resume ? [CODEX_BIN, "exec", "resume", ...flags, opts.resume, input] : [CODEX_BIN, "exec", ...flags, input];
   const started = Date.now();
   const env = CODEX_HOME ? { ...process.env, CODEX_HOME } : process.env;
   // stdin must be closed: codex exec otherwise waits for more prompt text on it.
