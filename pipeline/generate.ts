@@ -188,6 +188,8 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
     "-c", `tools.web_search=${opts.web}`,
     "-c", 'model_reasoning_effort="high"',
     "-c", "project_doc_max_bytes=0",
+    // Global AGENTS.md files can tell the model to fan out sub-agents; waiting on them ran guides past the timeout.
+    "-c", "features.multi_agent=false",
     "--skip-git-repo-check",
     "--json",
     "--output-schema", schemaFile,
