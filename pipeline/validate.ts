@@ -11,7 +11,7 @@ export interface Report {
 /** Longest situation hint: the app keeps two lines for it under the chips on a 360 dp screen. */
 export const SIT_WHEN_MAX = 90;
 
-const LIMITS = {
+export const LIMITS = {
   combo: [2, 4, 200],
   ability: [20, 700],
   tipIntro: [20, 300],

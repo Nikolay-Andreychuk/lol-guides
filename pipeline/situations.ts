@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { ROOT } from "./config";
 import { dictionaryPath, listGuides, loadDictionary, saveGuide, writeJsonAtomic } from "./content";
 import { LimitReached, runAgent } from "./generate";
-import { SIT_WHEN_MAX } from "./validate";
+import { LIMITS, SIT_WHEN_MAX } from "./validate";
 import type { GuideSituation, SituationDef } from "./types";
 
 const str = { type: "string" } as const;
@@ -32,12 +32,15 @@ function namingRules(): string {
 }
 
 /** A `versus` point starts with a situation name; when the dictionary merges that name into
- * another, the point is renamed with the chip so the two screens keep agreeing. */
+ * another, the point is renamed with the chip so the two screens keep agreeing. A longer name
+ * that would push the point past the length limit is not applied: the guide must stay packable,
+ * and validation then warns about the old heading. */
 export function renameVersus(points: string[], renames: Map<string, string>): string[] {
   return points.map((p) => {
     const i = p.indexOf(":");
     const to = i > 0 ? renames.get(p.slice(0, i).trim()) : undefined;
-    return to ? `${to}${p.slice(i)}` : p;
+    const renamed = to ? `${to}${p.slice(i)}` : p;
+    return renamed.length <= LIMITS.tipPoint[1] ? renamed : p;
   });
 }
 

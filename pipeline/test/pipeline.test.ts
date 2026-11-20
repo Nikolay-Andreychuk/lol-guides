@@ -147,6 +147,11 @@ describe("renameVersus", () => {
     const points = ["Невидимки: держи метку.", "Много хила: Мореллономикон раньше.", "Без двоеточия Невидимки"];
     expect(renameVersus(points, new Map([["Невидимки", "Много невидимок"]]))).toEqual(["Много невидимок: держи метку.", "Много хила: Мореллономикон раньше.", "Без двоеточия Невидимки"]);
   });
+  test("a rename that would break the length limit is skipped", () => {
+    const long = `Маги: ${"а".repeat(335)}`;
+    expect(long.length).toBeLessThanOrEqual(350);
+    expect(renameVersus([long], new Map([["Маги", "Много магического урона"]]))).toEqual([long]);
+  });
 });
 
 describe("nearMisses", () => {
