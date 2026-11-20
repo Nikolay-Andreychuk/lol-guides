@@ -60,7 +60,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aramguides.app.pack.Champion
@@ -341,15 +340,14 @@ private fun BuyTab(pack: LoadedPack, guide: Guide, onItem: (Int) -> Unit) {
             }
         }
         item {
-            // A fixed two-line height keeps the build list in place while chips are compared.
+            // Two lines at least keep the build list in place while chips are compared; a larger
+            // system font may need a third, and the hint is shown nowhere else, so it is not cut.
             Text(
                 build.`when`,
                 color = Palette.muted,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
                 minLines = 2,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }

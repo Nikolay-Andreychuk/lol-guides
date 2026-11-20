@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { ROOT } from "./config";
 import { dictionaryPath, listGuides, loadDictionary, saveGuide, writeJsonAtomic } from "./content";
 import { LimitReached, runAgent } from "./generate";
-import { SIT_WHEN_MAX } from "./validate";
+import { LIMITS, SIT_WHEN_MAX } from "./validate";
 import type { GuideSituation, SituationDef } from "./types";
 
 const str = { type: "string" } as const;
@@ -29,6 +29,19 @@ function namingRules(): string {
   const m = skill.match(/## Названия ситуаций\n([\s\S]*?)(?=\n## )/);
   if (!m) throw new Error("В SKILL.md нет раздела «Названия ситуаций»");
   return m[1].trim();
+}
+
+/** A `versus` point starts with a situation name; when the dictionary merges that name into
+ * another, the point is renamed with the chip so the two screens keep agreeing. A longer name
+ * that would push the point past the length limit is not applied: the guide must stay packable,
+ * and validation then warns about the old heading. */
+export function renameVersus(points: string[], renames: Map<string, string>): string[] {
+  return points.map((p) => {
+    const i = p.indexOf(":");
+    const to = i > 0 ? renames.get(p.slice(0, i).trim()) : undefined;
+    const renamed = to ? `${to}${p.slice(i)}` : p;
+    return renamed.length <= LIMITS.tipPoint[1] ? renamed : p;
+  });
 }
 
 /**
@@ -100,12 +113,15 @@ export async function situations(log = console.log) {
   // The dictionary only grows, so writing it first leaves no guide pointing at a missing key if
   // the run stops while guides are rewritten; a rerun then finishes the rewrite.
   writeJsonAtomic(dictionaryPath(), next);
+  const nameOf = new Map(next.map((d) => [d.key, d.name]));
   for (const g of guides) {
     if (!g.situations.some((s) => "name" in s)) continue;
     const seen = new Set<string>();
     const out: GuideSituation[] = [];
+    const renames = new Map<string, string>();
     for (const s of g.situations) {
       const key = "key" in s ? s.key : map.get(s.name.trim())!;
+      if ("name" in s && nameOf.get(key) !== s.name.trim()) renames.set(s.name.trim(), nameOf.get(key)!);
       if (seen.has(key)) {
         log(`  ${g.champion}: «${"name" in s ? s.name : key}» совпала с другой ситуацией этого гайда (${key}), оставлена первая`);
         continue;
@@ -113,7 +129,8 @@ export async function situations(log = console.log) {
       seen.add(key);
       out.push({ key, changes: s.changes });
     }
-    saveGuide({ ...g, situations: out });
+    const versus = { ...g.tips.versus, points: renameVersus(g.tips.versus.points, renames) };
+    saveGuide({ ...g, situations: out, tips: { ...g.tips, versus } });
   }
   log(`Словарь: ${next.length} записей (новых ${next.length - dict.length}).`);
   for (const d of next.slice(dict.length)) log(`  ${d.key} — ${d.name} (${uses.get(d.key)} гайд.)`);
