@@ -32,24 +32,15 @@ class Updater(context: Context, private val store: PackStore, private val baseUr
         val conn = (URL("${baseUrl.trimEnd('/')}/$LATEST").openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000
             readTimeout = 15_000
-            prefs.getString("etag", null)?.let { setRequestProperty("If-None-Match", it) }
         }
         try {
-            if (conn.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                prefs.edit().putLong("lastCheck", now).apply()
-                return UpdateResult.Nothing
-            }
             if (conn.responseCode != 200) return UpdateResult.Nothing
             val latest = packJson.decodeFromString(Latest.serializer(), conn.inputStream.bufferedReader().readText())
             // Written before the download: a pack this build can't use is retried at the normal interval, not at every resume.
             prefs.edit().putInt("pointerSchema", latest.schema).putLong("lastCheck", now).apply()
             // A pack of another schema would fail the header check after the whole download.
             val usable = latest.schema == SUPPORTED_SCHEMA && latest.version > (store.activeVersion() ?: 0)
-            val result = if (usable) download(latest) else UpdateResult.Nothing
-            // The ETag is remembered only after the pack it announces is in place, and only for this
-            // build's schema: a later build that reads another schema must not get 304 for this pointer.
-            if (latest.schema == SUPPORTED_SCHEMA) prefs.edit().putString("etag", conn.getHeaderField("ETag")).apply()
-            return result
+            return if (usable) download(latest) else UpdateResult.Nothing
         } finally {
             conn.disconnect()
         }
