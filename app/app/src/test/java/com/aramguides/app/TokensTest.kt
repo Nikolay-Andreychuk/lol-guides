@@ -2,6 +2,7 @@ package com.aramguides.app
 
 import com.aramguides.app.ui.Piece
 import com.aramguides.app.ui.Tokens
+import com.aramguides.app.ui.boldMarked
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -18,4 +19,10 @@ class TokensTest {
     @Test fun unknownTokenStaysText() = assertEquals(listOf(Piece.Text("{X} и {q}")), Tokens.parse("{X} и {q}"))
 
     @Test fun empty() = assertEquals(emptyList<Piece>(), Tokens.parse(""))
+
+    @Test fun boldMarkers() {
+        val text = boldMarked("60 силы\n\n**Мучения**\nПоджигает.")
+        assertEquals("60 силы\n\nМучения\nПоджигает.", text.text)
+        assertEquals("Мучения", text.spanStyles.single().let { text.text.substring(it.start, it.end) })
+    }
 }

@@ -6,7 +6,7 @@ import { eligibleItems, plain, type ModeConfig } from "../catalog";
 import { patchLabel } from "../config";
 import type { DDData } from "../ddragon";
 import { normalize, readEvents } from "../generate";
-import { resolveBuilds } from "../pack";
+import { itemText, resolveBuilds } from "../pack";
 import { renameVersus } from "../situations";
 import type { Guide, GuideBody, SituationDef } from "../types";
 import { knownWords, nearMisses, officialNames, validateGuide } from "../validate";
@@ -209,5 +209,14 @@ describe("misc", () => {
   });
   test("plain strips Riot markup", () => {
     expect(plain("<mainText><stats><attention>12</attention> брони<br>5 ед.</stats></mainText>&nbsp;x")).toBe("12 брони\n5 ед. x");
+  });
+  test("item text marks effect names for bold", () => {
+    const html = "<mainText><stats><attention>60</attention> силы умений</stats><br><br><passive>Мучения</passive><br>Поджигает.<br><br><active><b>Рывок</b></active> вперёд.</mainText>";
+    expect(itemText(html)).toBe("60 силы умений\n\n**Мучения**\nПоджигает.\n\n**Рывок** вперёд.");
+    // Ravenous Hydra opens its active with a line break inside the tag.
+    expect(itemText("поблизости.<active><br>Ненасытный полумесяц</active><br>Вы")).toBe("поблизости.\n**Ненасытный полумесяц**\nВы");
+    // Knight's Vow has no break before its active; an inline mention after a space stays inline.
+    expect(itemText("чемпионам.<active>Присяга</active> (0 сек.)")).toBe("чемпионам.\n**Присяга** (0 сек.)");
+    expect(itemText("срабатывает <passive>Гипервыстрел</passive>.")).toBe("срабатывает **Гипервыстрел**.");
   });
 });

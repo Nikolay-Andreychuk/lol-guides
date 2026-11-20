@@ -61,6 +61,13 @@ private val GREY = ColorFilter.colorMatrix(
     },
 )
 
+/** Item text with the effect names the pack wraps in ** drawn semibold. */
+fun boldMarked(text: String) = buildAnnotatedString {
+    text.split("**").forEachIndexed { i, part ->
+        if (i % 2 == 1) withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Palette.on)) { append(part) } else append(part)
+    }
+}
+
 /** Guide text with {P}{Q}{W}{E}{R} drawn as the ability letter followed by its small icon. */
 @Composable
 fun RichText(

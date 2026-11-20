@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +26,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,8 +62,11 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aramguides.app.pack.Champion
@@ -88,6 +95,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     val abilityIcons = remember(champ) { champ.abilities.orEmpty().mapValues { it.value.icon } }
     var sheetItem by rememberSaveable { mutableStateOf<Int?>(null) }
     var sheetAbility by rememberSaveable { mutableStateOf<String?>(null) }
+    var sheetSpell by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         Header(pack, champ, guide, onBack)
@@ -129,7 +137,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
                         layout(p.width, p.height + off) { p.place(0, off) }
                     },
             ) {
-                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it }, onAbility = { sheetAbility = it })
+                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it }, onAbility = { sheetAbility = it }, onSpell = { sheetSpell = it })
             }
 
             val pager = rememberPagerState { TABS.size }
@@ -171,42 +179,72 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     }
 
     sheetAbility?.let { key ->
-        ModalBottomSheet(onDismissRequest = { sheetAbility = null }, containerColor = Palette.s1) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true)
-                    Spacer(Modifier.width(12.dp))
-                    Text(champ.abilities?.get(key)?.name ?: abilityLetter(key), color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                }
-                guide.abilities[key]?.let {
-                    Spacer(Modifier.height(12.dp))
-                    RichText(it, pack, abilityIcons, BODY)
-                }
+        InfoSheet(
+            onDismiss = { sheetAbility = null },
+            icon = { AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true) },
+            title = champ.abilities?.get(key)?.name ?: abilityLetter(key),
+        ) {
+            guide.abilities[key]?.let {
+                Spacer(Modifier.height(12.dp))
+                RichText(it, pack, abilityIcons, BODY)
             }
         }
     }
 
     sheetItem?.let { id ->
         val item = pack.data.items[id.toString()]
-        ModalBottomSheet(onDismissRequest = { sheetItem = null }, containerColor = Palette.s1) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PackIcon(pack, item?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(item?.name ?: "Предмет $id", color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                        if (item != null) Text("${item.price} золота", color = Palette.change, fontSize = 13.sp)
-                    }
+        InfoSheet(
+            onDismiss = { sheetItem = null },
+            icon = { PackIcon(pack, item?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp)) },
+            title = item?.name ?: "Предмет $id",
+            subtitle = item?.let { "${it.price} золота" },
+        ) {
+            if (item != null) {
+                Spacer(Modifier.height(12.dp))
+                if (item.removed) {
+                    Text("Нет в патче ${pack.data.patch} — в магазине не найти", color = Palette.gone, fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
                 }
-                if (item != null) {
-                    Spacer(Modifier.height(12.dp))
-                    if (item.removed) {
-                        Text("Нет в патче ${pack.data.patch} — в магазине не найти", color = Palette.gone, fontSize = 13.sp)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    Text(item.description, style = BODY)
+                Text(boldMarked(item.description), style = BODY)
+            }
+        }
+    }
+
+    sheetSpell?.let { id ->
+        val spell = pack.data.spells[id]
+        InfoSheet(
+            onDismiss = { sheetSpell = null },
+            icon = { PackIcon(pack, spell?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp)) },
+            title = spell?.name ?: id,
+        ) {
+            if (spell != null) {
+                Spacer(Modifier.height(12.dp))
+                Text(spell.description, style = BODY)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InfoSheet(
+    onDismiss: () -> Unit,
+    icon: @Composable () -> Unit,
+    title: String,
+    subtitle: String? = null,
+    body: @Composable ColumnScope.() -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Palette.s1) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                icon()
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(title, color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    if (subtitle != null) Text(subtitle, color = Palette.change, fontSize = 13.sp)
                 }
             }
+            body()
         }
     }
 }
@@ -216,7 +254,7 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
     Row(
         Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .heightIn(min = 64.dp)
             .padding(end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -224,8 +262,16 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
         PackIcon(pack, champ.icon, Modifier.size(40.dp), CircleShape)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(champ.name, color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, maxLines = 1)
+            // Shrinks instead of clipping: at 360 dp and font scale 1.3 «Хеймердингер» and «Мисс Фортуна» do not fit at 18 sp.
+            BasicText(
+                champ.name,
+                style = TextStyle(color = Palette.on, fontWeight = FontWeight.SemiBold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 18.sp, stepSize = 0.5.sp),
+            )
+            // Two lines: at 360 dp with large fonts the patch chip leaves room for only part of «Поддержка · Стрелок».
+            Text(champ.roles, color = Palette.muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2)
         }
         val stale = guide.patch != pack.data.patch
         Text(
@@ -242,7 +288,14 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>, onItem: (Int) -> Unit, onAbility: (String) -> Unit) {
+private fun Memo(
+    pack: LoadedPack,
+    guide: Guide,
+    abilityIcons: Map<String, String>,
+    onItem: (Int) -> Unit,
+    onAbility: (String) -> Unit,
+    onSpell: (String) -> Unit,
+) {
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         // Wraps instead of squeezing: four start items and a skill order don't fit one line at 360 dp.
         FlowRow(
@@ -251,12 +304,18 @@ private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, Strin
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             MemoGroup("Заклинания") {
-                guide.spells.forEach { PackIcon(pack, pack.data.spells[it]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp)) }
+                guide.spells.forEach { id ->
+                    val spell = pack.data.spells[id]
+                    Box(Modifier.clickable { onSpell(id) }.semantics { contentDescription = spell?.name ?: id }) {
+                        PackIcon(pack, spell?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
+                    }
+                }
             }
             MemoGroup("Старт") {
                 guide.start.forEach { s ->
-                    Box(Modifier.clickable { onItem(s.item) }) {
-                        PackIcon(pack, pack.data.items[s.item.toString()]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
+                    val item = pack.data.items[s.item.toString()]
+                    Box(Modifier.clickable { onItem(s.item) }.semantics { contentDescription = item?.name ?: s.item.toString() }) {
+                        PackIcon(pack, item?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
                         if (s.count > 1) {
                             Text(
                                 "×${s.count}",

@@ -6,8 +6,10 @@ import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,17 +17,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -44,6 +46,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -129,7 +132,7 @@ fun SearchScreen(
         val byId = pack.championsById
         LazyVerticalGrid(
             state = gridState,
-            columns = GridCells.Adaptive(78.dp),
+            columns = GridCells.Adaptive(TILE_MIN),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
@@ -139,9 +142,15 @@ fun SearchScreen(
                 if (recentChamps.isNotEmpty()) {
                     label("Недавние")
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        LazyRow(contentPadding = PaddingValues(horizontal = 4.dp)) {
-                            items(recentChamps, key = { it.id }) { c ->
-                                Tile(pack, c, "", first = false, Modifier.width(78.dp)) { open(c.id) }
+                        // One row of the columns GridCells.Adaptive picks, so the tiles sit over the grid. A scrolling row
+                        // of exactly fitting tiles gave no hint that more recents were hidden past the edge.
+                        BoxWithConstraints {
+                            val columns = (maxWidth / TILE_MIN).toInt().coerceAtLeast(1)
+                            val cell = maxWidth / columns
+                            Row {
+                                recentChamps.take(columns).forEach { c ->
+                                    Tile(pack, c, "", first = false, Modifier.width(cell)) { open(c.id) }
+                                }
                             }
                         }
                     }
@@ -187,6 +196,8 @@ fun SearchScreen(
     }
 }
 
+private val TILE_MIN = 78.dp
+
 private fun LazyGridScope.label(text: String) = item(span = { GridItemSpan(maxLineSpan) }) {
     Text(text, color = Palette.muted, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 8.dp, top = 4.dp))
 }
@@ -207,14 +218,14 @@ private fun Tile(pack: LoadedPack, c: Champion, highlight: String, first: Boolea
         val shape = RoundedCornerShape(14.dp)
         val ring = if (first) Modifier.border(2.dp, Palette.primary, RoundedCornerShape(17.dp)).padding(4.dp) else Modifier.padding(4.dp)
         PackIcon(pack, c.icon, ring.size(64.dp), shape, grey = !hasGuide)
-        Text(
+        // A one-word name shrinks to fit its line instead of breaking mid-word («Хеймердинг / ер»).
+        // The 7 sp floor is reached only with large fonts: at scale 1.3 a 411 dp phone's five columns need about 8 sp.
+        BasicText(
             highlighted(c.name, highlight),
-            color = if (hasGuide) Palette.on else Palette.faint,
-            fontSize = 12.sp,
-            lineHeight = 15.sp,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
+            style = TextStyle(color = if (hasGuide) Palette.on else Palette.faint, lineHeight = 15.sp, textAlign = TextAlign.Center),
+            maxLines = if (' ' in c.name) 2 else 1,
             overflow = TextOverflow.Ellipsis,
+            autoSize = TextAutoSize.StepBased(minFontSize = 7.sp, maxFontSize = 12.sp, stepSize = 0.5.sp),
             modifier = Modifier.padding(horizontal = 2.dp),
         )
     }

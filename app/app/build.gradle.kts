@@ -11,15 +11,32 @@ android {
         applicationId = "com.aramguides.app"
         minSdk = 26
         targetSdk = 36
+        // app-vN on GitHub releases ships versionCode N; README «Выпуск приложения».
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1"
         val prop = { name: String -> (project.findProperty(name) as String?).orEmpty() }
         buildConfigField("String", "CONTENT_BASE_URL", "\"${prop("contentBaseUrl")}\"")
         buildConfigField("String", "RELEASES_URL", "\"${prop("releasesUrl")}\"")
     }
+    // The release key and its password live outside the repo, in ~/.gradle/gradle.properties.
+    // Without them assembleRelease still builds, but the APK is unsigned and will not install.
+    val releaseKey = (findProperty("aramReleaseStoreFile") as String?)?.let(::file)
+    signingConfigs {
+        if (releaseKey != null) create("release") {
+            storeFile = releaseKey
+            storePassword = findProperty("aramReleasePassword") as String?
+            keyAlias = "aram-guides"
+            keyPassword = findProperty("aramReleasePassword") as String?
+        }
+    }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
+        }
+    }
     // The pack is a zip of already-compressed WebP files; storing it uncompressed in the APK avoids double work.
     androidResources { noCompress += "zip" }
 }

@@ -94,6 +94,20 @@ async function oldItem(id: string, guideVersion: string): Promise<{ version: str
   return it ? { version: guideVersion, item: it } : null;
 }
 
+/** Item text for the app: plain, with the names of passive and active effects wrapped in ** so the item sheet can bold them. */
+export function itemText(html: string): string {
+  return plain(
+    html.replace(/<(passive|active)>([\s\S]*?)<\/\1>/g, (_, _tag, inner: string, at: number) => {
+      // A tag can open with its own line break (Ravenous Hydra: <active><br>Name</active>); the break stays outside the marker.
+      let [, before, name, after] = inner.match(/^((?:\s|<br\s*\/?>)*)([\s\S]*?)((?:\s|<br\s*\/?>)*)$/)!;
+      // Riot's client starts an effect on a new line; a few items omit the <br> after the previous sentence (Knight's Vow).
+      if (!before && /[.!?]$/.test(html.slice(0, at))) before = "<br>";
+      const text = plain(name);
+      return text ? `${before}**${text}**${after}` : before + after;
+    }),
+  );
+}
+
 export async function pack(log = console.log) {
   const version = currentVersion();
   const data = loadData(version);
@@ -155,7 +169,7 @@ export async function pack(log = console.log) {
     }
     const png = await ensureIcon(from, "item", it.image.full);
     addIcon(`item/${id}.webp`, png);
-    items[id] = { name: it.name, price: it.gold.total, description: plain(it.description), icon: `item/${id}.webp`, removed };
+    items[id] = { name: it.name, price: it.gold.total, description: itemText(it.description), icon: `item/${id}.webp`, removed };
   }
 
   const spells: PackJson["spells"] = {};
