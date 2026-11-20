@@ -99,7 +99,9 @@ export async function pack(log = console.log) {
   const guides = listGuides();
   const eligible = eligibleItems(data, mode).items;
 
-  const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
+  // Seconds included: two packs built a minute apart must not share a version, or phones that
+  // took the first one would never take the second.
+  const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
   const packVersion = Number(stamp);
   const staging = join(DIST, MODE, LANG, `staging-${stamp}`);
   rmSync(staging, { recursive: true, force: true });

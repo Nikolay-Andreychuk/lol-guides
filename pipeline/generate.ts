@@ -172,6 +172,33 @@ const LIMIT_RE = /usage limit|rate.?limit|quota|too many requests/i;
 export const addUsage = (a: Usage, b: Usage): Usage => ({ input: a.input + b.input, cached: a.cached + b.cached, output: a.output + b.output });
 export const formatUsage = (u: Usage) => `${Math.round(u.input / 1000)}k вход (${Math.round(u.cached / 1000)}k из кэша), ${Math.round(u.output / 1000)}k выход`;
 
+/** Codex features that reach the local machine beyond web search; all are turned off for guide runs. */
+const HOST_TOOLS = ["shell_tool", "unified_exec", "browser_use", "browser_use_external", "in_app_browser", "computer_use", "apps", "view_image"];
+/** Event items that mean the agent touched the machine anyway, e.g. after a Codex update adds a tool. */
+const HOST_ITEMS = new Set(["command_execution", "file_change", "mcp_tool_call"]);
+
+/** Reads `codex exec --json` output: session id, token usage, and the first failure, if any. */
+export function readEvents(out: string): { sessionId?: string; usage: Usage; error?: string } {
+  const usage: Usage = { input: 0, cached: 0, output: 0 };
+  let sessionId: string | undefined;
+  let error: string | undefined;
+  for (const line of out.split("\n")) {
+    let e: Record<string, any>;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (e.type === "thread.started") sessionId = e.thread_id;
+    if (e.type === "turn.completed" && e.usage)
+      Object.assign(usage, addUsage(usage, { input: e.usage.input_tokens ?? 0, cached: e.usage.cached_input_tokens ?? 0, output: e.usage.output_tokens ?? 0 }));
+    if ((e.type === "turn.failed" || e.type === "error") && !error) error = String(e.error?.message ?? e.message ?? "ошибка агента");
+    if (e.type?.startsWith("item.") && HOST_ITEMS.has(e.item?.type))
+      error = `агент обратился к компьютеру (${e.item.type}), ответ отброшен`;
+  }
+  return { sessionId, usage, error };
+}
+
 /** One `codex exec` run in a read-only sandbox, answering with JSON that matches the schema. */
 export async function runAgent(prompt: string, opts: AgentOptions): Promise<AgentRun> {
   mkdirSync(AGENT_CWD, { recursive: true });
@@ -188,6 +215,10 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
     "-c", `tools.web_search=${opts.web}`,
     "-c", 'model_reasoning_effort="high"',
     "-c", "project_doc_max_bytes=0",
+    // The agent reads untrusted web pages, so it gets no way to read local files: read-only mode
+    // still lets shell commands read the whole disk. Web search runs through the code-mode host,
+    // which must stay on.
+    ...HOST_TOOLS.flatMap((f) => ["--disable", f]),
     "--skip-git-repo-check",
     "--json",
     "--output-schema", schemaFile,
@@ -210,21 +241,10 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
   await proc.exited;
   clearTimeout(timer);
 
-  const usage: Usage = { input: 0, cached: 0, output: 0 };
-  let sessionId = opts.resume;
-  let error: string | undefined;
-  for (const line of out.split("\n")) {
-    let e: Record<string, any>;
-    try {
-      e = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (e.type === "thread.started") sessionId = e.thread_id;
-    if (e.type === "turn.completed" && e.usage)
-      Object.assign(usage, addUsage(usage, { input: e.usage.input_tokens ?? 0, cached: e.usage.cached_input_tokens ?? 0, output: e.usage.output_tokens ?? 0 }));
-    if (e.type === "turn.failed" || e.type === "error") error = String(e.error?.message ?? e.message ?? "ошибка агента");
-  }
+  const events = readEvents(out);
+  const { usage } = events;
+  const sessionId = events.sessionId ?? opts.resume;
+  let error = events.error;
   const durationMs = Date.now() - started;
   const text = existsSync(outFile) ? readFileSync(outFile, "utf8") : "";
   rmSync(dir, { recursive: true, force: true });
@@ -300,7 +320,7 @@ async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
     const fix = [
       "Проверка гайда нашла проблемы. Исправь их и верни гайд целиком по той же схеме.",
       ...report.errors.map((e) => `Ошибка: ${e}`),
-      ...report.warnings.map((w) => `Предупреждение: ${w}. Если название написано верно (например, это обычное слово), оставь как есть.`),
+      ...report.warnings.map((w) => `Предупреждение: ${w}.`),
     ].join("\n");
     const second = await runAgent(fix, { ...web, resume: first.sessionId });
     usage = addUsage(usage, second.usage);

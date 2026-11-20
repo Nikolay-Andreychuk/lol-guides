@@ -40,3 +40,13 @@ export async function publish(log = console.log) {
 
   log(`Опубликовано: ${latest.file} (версия ${latest.version}) в ${repo}, выпуск «${RELEASE_TAG}».`);
 }
+
+/** Version named by the release's pointer file, or null when nothing is published or gh fails. */
+export async function publishedVersion(): Promise<number | null> {
+  const out = await gh(["release", "download", RELEASE_TAG, "-p", latestName(), "-O", "-"], true);
+  try {
+    return Number(JSON.parse(out).version) || null;
+  } catch {
+    return null;
+  }
+}
