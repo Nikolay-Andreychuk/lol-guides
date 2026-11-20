@@ -116,7 +116,15 @@ describe("readEvents", () => {
   const line = (o: object) => JSON.stringify(o);
   test("counts usage and keeps the session id", () => {
     const r = readEvents([line({ type: "thread.started", thread_id: "t1" }), line({ type: "item.completed", item: { type: "web_search" } }), line({ type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 4, output_tokens: 2 } })].join("\n"));
-    expect(r).toEqual({ sessionId: "t1", usage: { input: 10, cached: 4, output: 2 }, error: undefined });
+    expect(r).toEqual({ sessionId: "t1", usage: { input: 10, cached: 4, output: 2 }, error: undefined, notice: undefined });
+  });
+  test("an error Codex retried past does not fail the run", () => {
+    const r = readEvents([line({ type: "error", message: "Reconnecting... 1/5 (Too Many Requests)" }), line({ type: "turn.completed", usage: { output_tokens: 5 } })].join("\n"));
+    expect(r.error).toBeUndefined();
+  });
+  test("a failed turn fails the run with Codex's message", () => {
+    const r = readEvents([line({ type: "error", message: "usage limit reached" }), line({ type: "turn.failed", error: {} })].join("\n"));
+    expect(r.error).toBe("usage limit reached");
   });
   test("a command run by the agent fails the run", () => {
     const r = readEvents([line({ type: "item.started", item: { type: "command_execution", command: "cat ~/.ssh/id_rsa" } }), line({ type: "turn.completed", usage: { input_tokens: 1 } })].join("\n"));

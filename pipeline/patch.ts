@@ -34,20 +34,22 @@ export async function patch(log = console.log) {
   // Champions without a guide for this version, the same set `generate` works through.
   const current = new Map(listGuides().map((g) => [g.champion, g.ddragon]));
   const todo = Object.keys(loadData(version).champions).filter((c) => current.get(c) !== version).length;
+  const named = () => listGuides().some((g) => g.situations.some((s) => "name" in s));
+  let stopped = false;
   if (!changed && todo === 0) {
-    if (await published()) {
+    if (!named() && (await published())) {
       log("Новых данных Riot нет, все гайды актуальны и опубликованы. Если патч уже вышел, Data Dragon может отставать до пары дней.");
       return;
     }
-    // An earlier run generated guides but its final upload failed or never ran.
-    log("Гайды актуальны, но последний пакет не опубликован. Собираю и публикую.");
-    await packAndPublish(log);
-    return;
+    // An earlier run generated guides but stopped before the dictionary or the upload.
+    log("Гайды актуальны, но последний пакет не собран или не опубликован. Доделываю.");
+  } else {
+    // Publishing right after sync lets phones show «Гайд для …» and removed items while generation runs.
+    if (changed) await packAndPublish(log);
+    stopped = Boolean((await generate({}, log)).stopped);
   }
-  // Publishing right after sync lets phones show «Гайд для …» and removed items while generation runs.
-  if (changed) await packAndPublish(log);
-  const r = await generate({}, log);
-  if (listGuides().some((g) => g.situations.some((s) => "name" in s))) await situations(log);
+  // After a limit stop the dictionary agent would hit the same limit; named situations pack as they are.
+  if (!stopped && named()) await situations(log);
   await packAndPublish(log);
-  if (r.stopped) log("Генерация остановилась на лимите подписки. Запустите `bun pipeline patch` позже — она продолжит.");
+  if (stopped) log("Генерация остановилась на лимите подписки. Запустите `bun pipeline patch` позже — она продолжит.");
 }

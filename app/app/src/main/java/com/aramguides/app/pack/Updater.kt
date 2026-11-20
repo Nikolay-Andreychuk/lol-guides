@@ -10,7 +10,6 @@ import java.security.MessageDigest
 sealed interface UpdateResult {
     data object Nothing : UpdateResult
     data class NewPack(val version: Long) : UpdateResult
-    data object AppUpdateNeeded : UpdateResult
 }
 
 /**
@@ -20,7 +19,8 @@ sealed interface UpdateResult {
 class Updater(context: Context, private val store: PackStore, private val baseUrl: String = BuildConfig.CONTENT_BASE_URL) {
     private val prefs = context.getSharedPreferences("updater", Context.MODE_PRIVATE)
 
-    val appUpdateNeeded: Boolean get() = prefs.getBoolean("appUpdateNeeded", false)
+    /** The release announces packs this build can't read. Derived from the stored schema, so a newer build reads false at once. */
+    val appUpdateNeeded: Boolean get() = prefs.getInt("pointerSchema", SUPPORTED_SCHEMA) > SUPPORTED_SCHEMA
 
     fun check(now: Long = System.currentTimeMillis()): UpdateResult {
         if (baseUrl.isBlank()) return UpdateResult.Nothing
@@ -41,14 +41,13 @@ class Updater(context: Context, private val store: PackStore, private val baseUr
             }
             if (conn.responseCode != 200) return UpdateResult.Nothing
             val latest = packJson.decodeFromString(Latest.serializer(), conn.inputStream.bufferedReader().readText())
-            if (latest.schema > SUPPORTED_SCHEMA) {
-                prefs.edit().putBoolean("appUpdateNeeded", true).putLong("lastCheck", now).apply()
-                return UpdateResult.AppUpdateNeeded
-            }
-            prefs.edit().putBoolean("appUpdateNeeded", false).apply()
-            val result = if (latest.version > (store.activeVersion() ?: 0)) download(latest) else UpdateResult.Nothing
+            // Written before the download: a pack this build can't use is retried at the normal interval, not at every resume.
+            prefs.edit().putInt("pointerSchema", latest.schema).putLong("lastCheck", now).apply()
+            // A pack of another schema would fail the header check after the whole download.
+            val usable = latest.schema == SUPPORTED_SCHEMA && latest.version > (store.activeVersion() ?: 0)
+            val result = if (usable) download(latest) else UpdateResult.Nothing
             // The ETag is remembered only after the pack it announces is in place.
-            prefs.edit().putLong("lastCheck", now).putString("etag", conn.getHeaderField("ETag")).apply()
+            prefs.edit().putString("etag", conn.getHeaderField("ETag")).apply()
             return result
         } finally {
             conn.disconnect()

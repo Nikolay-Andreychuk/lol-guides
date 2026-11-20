@@ -45,7 +45,6 @@ class AppViewModel(app: Application, private val saved: SavedStateHandle) : Andr
         private set
 
     /** Set when returning from a guide: the search field selects the old query so typing replaces it. */
-    var selectQueryOnReturn by mutableStateOf(false)
 
     var recent by mutableStateOf(prefs.getString("recent", "").orEmpty().split(",").filter { it.isNotBlank() })
         private set
@@ -73,13 +72,10 @@ class AppViewModel(app: Application, private val saved: SavedStateHandle) : Andr
         if (pack == null) return
         viewModelScope.launch(Dispatchers.IO) {
             updateLock.withLock {
-                when (updater.check()) {
-                    is UpdateResult.NewPack -> {
-                        val p = runCatching { store.open() }.getOrNull() ?: return@withLock
-                        withContext(Dispatchers.Main) { pack = p }
-                    }
-                    UpdateResult.AppUpdateNeeded -> withContext(Dispatchers.Main) { appUpdateNeeded = true }
-                    UpdateResult.Nothing -> Unit
+                val fresh = if (updater.check() is UpdateResult.NewPack) runCatching { store.open() }.getOrNull() else null
+                withContext(Dispatchers.Main) {
+                    if (fresh != null) pack = fresh
+                    appUpdateNeeded = updater.appUpdateNeeded
                 }
             }
         }
@@ -104,6 +100,5 @@ class AppViewModel(app: Application, private val saved: SavedStateHandle) : Andr
         saved["champion"] = null
         guidePack = null
         if (query.text.isNotEmpty()) query = query.copy(selection = TextRange(0, query.text.length))
-        selectQueryOnReturn = true
     }
 }

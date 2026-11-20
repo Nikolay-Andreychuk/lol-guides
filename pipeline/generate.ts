@@ -177,11 +177,13 @@ const HOST_TOOLS = ["shell_tool", "unified_exec", "browser_use", "browser_use_ex
 /** Event items that mean the agent touched the machine anyway, e.g. after a Codex update adds a tool. */
 const HOST_ITEMS = new Set(["command_execution", "file_change", "mcp_tool_call"]);
 
-/** Reads `codex exec --json` output: session id, token usage, and the first failure, if any. */
-export function readEvents(out: string): { sessionId?: string; usage: Usage; error?: string } {
+/** Reads `codex exec --json` output: session id, token usage, the failure if the run failed, and Codex's last error notice. */
+export function readEvents(out: string): { sessionId?: string; usage: Usage; error?: string; notice?: string } {
   const usage: Usage = { input: 0, cached: 0, output: 0 };
   let sessionId: string | undefined;
-  let error: string | undefined;
+  let failed: string | undefined;
+  let notice: string | undefined;
+  let host: string | undefined;
   for (const line of out.split("\n")) {
     let e: Record<string, any>;
     try {
@@ -192,11 +194,14 @@ export function readEvents(out: string): { sessionId?: string; usage: Usage; err
     if (e.type === "thread.started") sessionId = e.thread_id;
     if (e.type === "turn.completed" && e.usage)
       Object.assign(usage, addUsage(usage, { input: e.usage.input_tokens ?? 0, cached: e.usage.cached_input_tokens ?? 0, output: e.usage.output_tokens ?? 0 }));
-    if ((e.type === "turn.failed" || e.type === "error") && !error) error = String(e.error?.message ?? e.message ?? "ошибка агента");
+    if (e.type === "turn.failed") failed ??= String(e.error?.message ?? "");
+    // Codex also reports errors it is still retrying («Reconnecting… 1/5»); only a failed turn fails the run.
+    if (e.type === "error") notice = String(e.message ?? e.error?.message ?? "");
     if (e.type?.startsWith("item.") && HOST_ITEMS.has(e.item?.type))
-      error = `агент обратился к компьютеру (${e.item.type}), ответ отброшен`;
+      host ??= `агент обратился к компьютеру (${e.item.type}), ответ отброшен`;
   }
-  return { sessionId, usage, error };
+  const error = host ?? (failed === undefined ? undefined : failed || notice || "ошибка агента");
+  return { sessionId, usage, error, notice };
 }
 
 /** One `codex exec` run in a read-only sandbox, answering with JSON that matches the schema. */
@@ -212,7 +217,8 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
     "--ignore-user-config",
     "-c", 'sandbox_mode="read-only"',
     "-c", 'approval_policy="never"',
-    "-c", `tools.web_search=${opts.web}`,
+    // Live search: the default cached index can predate the patch the guide is written for.
+    "-c", `web_search="${opts.web ? "live" : "disabled"}"`,
     "-c", 'model_reasoning_effort="high"',
     "-c", "project_doc_max_bytes=0",
     // The agent reads untrusted web pages, so it gets no way to read local files: read-only mode
@@ -249,7 +255,7 @@ export async function runAgent(prompt: string, opts: AgentOptions): Promise<Agen
   const text = existsSync(outFile) ? readFileSync(outFile, "utf8") : "";
   rmSync(dir, { recursive: true, force: true });
   if (timedOut) error = `агент не уложился в ${TIMEOUT_MS / 60_000} мин`;
-  else if (!error && proc.exitCode !== 0) error = err.trim().slice(-500) || `codex завершился с кодом ${proc.exitCode}`;
+  else if (!error && proc.exitCode !== 0) error = events.notice || err.trim().slice(-500) || `codex завершился с кодом ${proc.exitCode}`;
   if (error) return { sessionId, usage, durationMs, error: error.slice(0, 500), limit: LIMIT_RE.test(error) };
   try {
     return { body: JSON.parse(text), sessionId, usage, durationMs };
@@ -317,19 +323,27 @@ async function generateOne(champion: string, ctx: Ctx): Promise<Outcome> {
   let report = validateGuide(body, champion, ctx.data, ctx.mode, ctx.dict);
   // Warnings get one retry too: in the trial run every misspelt-name warning was real («Аатрокс», «Малфит»).
   if (report.errors.length || report.warnings.length) {
+    // An answer with only warnings is a valid guide: it is kept if the retry goes wrong.
+    const fallback = report.errors.length === 0;
     const fix = [
       "Проверка гайда нашла проблемы. Исправь их и верни гайд целиком по той же схеме.",
       ...report.errors.map((e) => `Ошибка: ${e}`),
       ...report.warnings.map((w) => `Предупреждение: ${w}.`),
     ].join("\n");
     const second = await runAgent(fix, { ...web, resume: first.sessionId });
-    usage = addUsage(usage, second.usage);
+    // A resumed run reports usage for the whole thread, the first run included.
+    if (second.usage.output) usage = second.usage;
     log.second = second;
-    if (second.limit) throw new LimitReached(second.error);
-    if (second.error) return finish({ champion, ok: false, usage, report: { errors: [second.error], warnings: [] } });
-    body = normalize(second.body, ctx.dict);
-    report = validateGuide(body, champion, ctx.data, ctx.mode, ctx.dict);
-    if (report.errors.length) return finish({ champion, ok: false, usage, report, note: prev ? "остался старый гайд" : "гайда нет" });
+    const retryBody = second.error ? null : normalize(second.body, ctx.dict);
+    const retryReport = retryBody && validateGuide(retryBody, champion, ctx.data, ctx.mode, ctx.dict);
+    if (retryBody && retryReport && !retryReport.errors.length) {
+      body = retryBody;
+      report = retryReport;
+    } else if (!fallback) {
+      if (second.limit) throw new LimitReached(second.error);
+      const failed = retryReport ?? { errors: [second.error ?? "пустой ответ"], warnings: [] };
+      return finish({ champion, ok: false, usage, report: failed, note: prev ? "остался старый гайд" : "гайда нет" });
+    }
   }
   saveGuide({ schema: GUIDE_SCHEMA, champion, ddragon: ctx.data.version, ...body });
   return finish({ champion, ok: true, usage, report });
