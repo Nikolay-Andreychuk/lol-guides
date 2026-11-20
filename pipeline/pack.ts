@@ -94,6 +94,11 @@ async function oldItem(id: string, guideVersion: string): Promise<{ version: str
   return it ? { version: guideVersion, item: it } : null;
 }
 
+/** Item text for the app: plain, with the names of passive and active effects wrapped in ** so the item sheet can bold them. */
+export function itemText(html: string): string {
+  return plain(html.replace(/<(passive|active)>([\s\S]*?)<\/\1>/g, (_, _tag, name: string) => (plain(name) ? `**${plain(name)}**` : "")));
+}
+
 export async function pack(log = console.log) {
   const version = currentVersion();
   const data = loadData(version);
@@ -155,7 +160,7 @@ export async function pack(log = console.log) {
     }
     const png = await ensureIcon(from, "item", it.image.full);
     addIcon(`item/${id}.webp`, png);
-    items[id] = { name: it.name, price: it.gold.total, description: plain(it.description), icon: `item/${id}.webp`, removed };
+    items[id] = { name: it.name, price: it.gold.total, description: itemText(it.description), icon: `item/${id}.webp`, removed };
   }
 
   const spells: PackJson["spells"] = {};

@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -88,6 +89,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     val abilityIcons = remember(champ) { champ.abilities.orEmpty().mapValues { it.value.icon } }
     var sheetItem by rememberSaveable { mutableStateOf<Int?>(null) }
     var sheetAbility by rememberSaveable { mutableStateOf<String?>(null) }
+    var sheetSpell by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         Header(pack, champ, guide, onBack)
@@ -129,7 +131,7 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
                         layout(p.width, p.height + off) { p.place(0, off) }
                     },
             ) {
-                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it }, onAbility = { sheetAbility = it })
+                Memo(pack, guide, abilityIcons, onItem = { sheetItem = it }, onAbility = { sheetAbility = it }, onSpell = { sheetSpell = it })
             }
 
             val pager = rememberPagerState { TABS.size }
@@ -171,42 +173,72 @@ fun GuideScreen(pack: LoadedPack, championId: String, onBack: () -> Unit) {
     }
 
     sheetAbility?.let { key ->
-        ModalBottomSheet(onDismissRequest = { sheetAbility = null }, containerColor = Palette.s1) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true)
-                    Spacer(Modifier.width(12.dp))
-                    Text(champ.abilities?.get(key)?.name ?: abilityLetter(key), color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                }
-                guide.abilities[key]?.let {
-                    Spacer(Modifier.height(12.dp))
-                    RichText(it, pack, abilityIcons, BODY)
-                }
+        InfoSheet(
+            onDismiss = { sheetAbility = null },
+            icon = { AbilityBadge(pack, abilityIcons[key], key, Modifier.size(48.dp), letter = true) },
+            title = champ.abilities?.get(key)?.name ?: abilityLetter(key),
+        ) {
+            guide.abilities[key]?.let {
+                Spacer(Modifier.height(12.dp))
+                RichText(it, pack, abilityIcons, BODY)
             }
         }
     }
 
     sheetItem?.let { id ->
         val item = pack.data.items[id.toString()]
-        ModalBottomSheet(onDismissRequest = { sheetItem = null }, containerColor = Palette.s1) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PackIcon(pack, item?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(item?.name ?: "Предмет $id", color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                        if (item != null) Text("${item.price} золота", color = Palette.change, fontSize = 13.sp)
-                    }
+        InfoSheet(
+            onDismiss = { sheetItem = null },
+            icon = { PackIcon(pack, item?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp)) },
+            title = item?.name ?: "Предмет $id",
+            subtitle = item?.let { "${it.price} золота" },
+        ) {
+            if (item != null) {
+                Spacer(Modifier.height(12.dp))
+                if (item.removed) {
+                    Text("Нет в патче ${pack.data.patch} — в магазине не найти", color = Palette.gone, fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
                 }
-                if (item != null) {
-                    Spacer(Modifier.height(12.dp))
-                    if (item.removed) {
-                        Text("Нет в патче ${pack.data.patch} — в магазине не найти", color = Palette.gone, fontSize = 13.sp)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    Text(item.description, style = BODY)
+                Text(boldMarked(item.description), style = BODY)
+            }
+        }
+    }
+
+    sheetSpell?.let { id ->
+        val spell = pack.data.spells[id]
+        InfoSheet(
+            onDismiss = { sheetSpell = null },
+            icon = { PackIcon(pack, spell?.icon, Modifier.size(48.dp), RoundedCornerShape(10.dp)) },
+            title = spell?.name ?: id,
+        ) {
+            if (spell != null) {
+                Spacer(Modifier.height(12.dp))
+                Text(spell.description, style = BODY)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InfoSheet(
+    onDismiss: () -> Unit,
+    icon: @Composable () -> Unit,
+    title: String,
+    subtitle: String? = null,
+    body: @Composable ColumnScope.() -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Palette.s1) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                icon()
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(title, color = Palette.on, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    if (subtitle != null) Text(subtitle, color = Palette.change, fontSize = 13.sp)
                 }
             }
+            body()
         }
     }
 }
@@ -242,7 +274,14 @@ private fun Header(pack: LoadedPack, champ: Champion, guide: Guide, onBack: () -
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, String>, onItem: (Int) -> Unit, onAbility: (String) -> Unit) {
+private fun Memo(
+    pack: LoadedPack,
+    guide: Guide,
+    abilityIcons: Map<String, String>,
+    onItem: (Int) -> Unit,
+    onAbility: (String) -> Unit,
+    onSpell: (String) -> Unit,
+) {
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         // Wraps instead of squeezing: four start items and a skill order don't fit one line at 360 dp.
         FlowRow(
@@ -251,7 +290,11 @@ private fun Memo(pack: LoadedPack, guide: Guide, abilityIcons: Map<String, Strin
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             MemoGroup("Заклинания") {
-                guide.spells.forEach { PackIcon(pack, pack.data.spells[it]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp)) }
+                guide.spells.forEach { id ->
+                    Box(Modifier.clickable { onSpell(id) }) {
+                        PackIcon(pack, pack.data.spells[id]?.icon, Modifier.size(32.dp), RoundedCornerShape(8.dp))
+                    }
+                }
             }
             MemoGroup("Старт") {
                 guide.start.forEach { s ->

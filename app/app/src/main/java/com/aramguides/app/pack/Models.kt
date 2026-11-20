@@ -33,11 +33,12 @@ data class Champion(
 @Serializable
 data class Ability(val name: String, val icon: String)
 
+/** [description] is plain text; effect names inside it are wrapped in ** (pipeline/pack.ts). */
 @Serializable
 data class Item(val name: String, val price: Int, val description: String, val icon: String, val removed: Boolean = false)
 
 @Serializable
-data class Spell(val icon: String)
+data class Spell(val name: String, val description: String, val icon: String)
 
 @Serializable
 data class Guide(
